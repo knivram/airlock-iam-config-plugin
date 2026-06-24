@@ -1,0 +1,15 @@
+schemaVersion: iam.airlock.com/v1.1
+type: IamConfig
+metadata:
+  iamVersion: '8.6'
+spec:
+- type: StepId
+  id: 22222222-2222-2222-2222-222222222222
+  displayName: Register mTAN Step
+  properties:
+    id: register-mtan
+- type: SomePlugin
+  id: aaaaaaaa-0000-0000-0000-000000000002
+  properties:
+    step:
+      ref: regist<caret>er-mtan

@@ -1,0 +1,21 @@
+schemaVersion: iam.airlock.com/v1.1
+type: IamConfig
+metadata:
+  iamVersion: '8.6'
+spec:
+- type: GlobalConfiguration
+  id: 11111111-1111-1111-1111-111111111111
+  displayName: globalConfig
+  properties:
+    dataSource:
+      type: JdbcConnectionPool
+      id: f0d2a309-8eb4-4574-a622-503d6e5f47be
+      displayName: PostgreSQL Database Connection
+      properties:
+        driverClass: org.postgresql.Driver
+    fallbackStep:
+      type: StepId
+      id: 22222222-2222-2222-2222-222222222222
+      displayName: Register mTAN Step
+      properties:
+        id: register-mtan

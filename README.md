@@ -1,45 +1,65 @@
 # airlock-iam-config-plugin
 
 ![Build](https://github.com/knivram/airlock-iam-config-plugin/workflows/Build/badge.svg)
-[![Version](https://img.shields.io/jetbrains/plugin/v/MARKETPLACE_ID.svg)](https://plugins.jetbrains.com/plugin/MARKETPLACE_ID)
-[![Downloads](https://img.shields.io/jetbrains/plugin/d/MARKETPLACE_ID.svg)](https://plugins.jetbrains.com/plugin/MARKETPLACE_ID)
 
-## Template ToDo list
-- [x] Create a new [IntelliJ Platform Plugin Template][template] project.
-- [ ] Get familiar with the [template documentation][template].
-- [ ] Adjust the [group](./gradle.properties), as well as the [id](./src/main/resources/META-INF/plugin.xml), [name](./src/main/resources/META-INF/plugin.xml), and [sources package](./src/main/kotlin).
-- [ ] Adjust the plugin [description](./src/main/resources/META-INF/plugin.xml) (see [Tips][docs:plugin-description]) and this README to describe what your plugin does.
-- [ ] Review the [Legal Agreements](https://plugins.jetbrains.com/docs/marketplace/legal-agreements.html?from=IJPluginTemplate).
-- [ ] [Publish a plugin manually](https://plugins.jetbrains.com/docs/intellij/publishing-plugin.html?from=IJPluginTemplate) for the first time.
-- [ ] Set the `MARKETPLACE_ID` in the above README badges. You can obtain it once the plugin is published to JetBrains Marketplace.
-- [ ] Set the [Plugin Signing](https://plugins.jetbrains.com/docs/intellij/plugin-signing.html?from=IJPluginTemplate) related [secrets](https://github.com/JetBrains/intellij-platform-plugin-template#environment-variables).
-- [ ] Set the [Deployment Token](https://plugins.jetbrains.com/docs/marketplace/plugin-upload.html?from=IJPluginTemplate).
-- [ ] Click the <kbd>Watch</kbd> button on the top of the [IntelliJ Platform Plugin Template][template] to be notified about releases containing new features and fixes.
+<!-- Plugin description -->
+Editor support for **Airlock IAM** configuration files — the large YAML documents with
+`type: IamConfig` and `schemaVersion: iam.airlock.com/…`.
 
-This Fancy IntelliJ Platform Plugin is going to be your implementation of the brilliant ideas that you have.
+These configs are trees of *plugins*. A plugin is a YAML mapping with a `type:` and an `id:`;
+instead of inlining a plugin, another place can reference it by `ref:` (or inherit via `parentRef:`)
+using that `id`. Because ids are opaque (usually UUIDs), navigating and maintaining these files by
+hand is painful. This plugin makes the references first-class:
 
-## Installation
+- **Go to definition** — Ctrl/Cmd+Click a `ref:` / `parentRef:` value to jump to the plugin `id:`
+  it points at.
+- **Find usages** — from a plugin's `id:`, list every `ref:` / `parentRef:` that points at it.
+- **Code completion**
+  - `ref:` / `parentRef:` values — pick an existing plugin (shown by its `displayName` and type);
+    the id is inserted for you.
+  - `type:` values — all Airlock IAM plugin types (a bundled IAM 8.6 catalog of ~1600 types, plus
+    any types already used in the file).
+- **Inspections** — a dangling `ref:` (no plugin declares that id) and a duplicate plugin `id:`
+  are highlighted.
 
-- Using the IDE built-in plugin system:
+Everything is scoped to a **single file**: configs are commonly duplicated (e.g. a production copy),
+where the same ids legitimately appear in several files — so resolving, finding usages and validating
+across files would produce false duplicate-id warnings and ambiguous navigation. Ordinary YAML
+(non-IamConfig) is untouched.
+<!-- Plugin description end -->
 
-  <kbd>Settings/Preferences</kbd> > <kbd>Plugins</kbd> > <kbd>Marketplace</kbd> > <kbd>Search for "airlock-iam-config-plugin"</kbd> >
-  <kbd>Install</kbd>
+## Requirements
 
-- Using JetBrains Marketplace:
+IntelliJ IDEA 2025.2+ (the bundled YAML plugin must be enabled).
 
-  Go to [JetBrains Marketplace](https://plugins.jetbrains.com/plugin/MARKETPLACE_ID) and install it by clicking the <kbd>Install to ...</kbd> button in case your IDE is running.
+## How it works
 
-  You can also download the [latest release](https://plugins.jetbrains.com/plugin/MARKETPLACE_ID/versions) from JetBrains Marketplace and install it manually using
-  <kbd>Settings/Preferences</kbd> > <kbd>Plugins</kbd> > <kbd>⚙️</kbd> > <kbd>Install plugin from disk...</kbd>
+- Each IamConfig file's plugins/references/types are collected in one PSI pass into a per-file model
+  that is cached (and rebuilt only when that file is edited), keeping navigation, completion,
+  find-usages and inspections fast without any cross-file lookup.
+- A reference is *the scalar value of a key named `ref` or `parentRef`*. A plugin definition is *an
+  `id:` whose mapping also has a sibling `type:`* — so a property that merely happens to be called
+  `id` (e.g. `StepId`'s `properties.id: register-mtan`) is correctly **not** treated as a definition.
 
-- Manually:
+## Updating the bundled type catalog
 
-  Download the [latest release](https://github.com/knivram/airlock-iam-config-plugin/releases/latest) and install it manually using
-  <kbd>Settings/Preferences</kbd> > <kbd>Plugins</kbd> > <kbd>⚙️</kbd> > <kbd>Install plugin from disk...</kbd>
+`type:` completion is backed by `src/main/resources/airlock/iam-8.6-plugins.json`, generated offline
+from the official Airlock IAM plugin documentation HTML (pinned to the IAM version in
+`metadata.iamVersion`, currently 8.6). The 20 MB source HTML is intentionally not committed. To
+regenerate for a new IAM version:
 
+```bash
+python3 tools/generate_catalog.py <iam-plugin-docs.html> src/main/resources/airlock/iam-8.6-plugins.json
+```
+
+## Building
+
+```bash
+./gradlew test            # run the test suite
+./gradlew verifyPlugin    # IntelliJ Plugin Verifier
+./gradlew runIde          # launch a sandbox IDE with the plugin
+./gradlew buildPlugin     # produce the installable .zip in build/distributions
+```
 
 ---
-Plugin based on the [IntelliJ Platform Plugin Template][template].
-
-[template]: https://github.com/JetBrains/intellij-platform-plugin-template
-[docs:plugin-description]: https://plugins.jetbrains.com/docs/intellij/plugin-user-experience.html#plugin-description-and-presentation
+Plugin based on the [IntelliJ Platform Plugin Template](https://github.com/JetBrains/intellij-platform-plugin-template).

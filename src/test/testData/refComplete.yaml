@@ -1,0 +1,16 @@
+schemaVersion: iam.airlock.com/v1.1
+type: IamConfig
+metadata:
+  iamVersion: '8.6'
+spec:
+- type: JdbcConnectionPool
+  id: f0d2a309-8eb4-4574-a622-503d6e5f47be
+  displayName: PostgreSQL Database Connection
+- type: SimplePasswordPolicy
+  id: 658b3b83-f638-45ff-a433-1e130c847e0c
+  displayName: Default Password Policy
+- type: Consumer
+  id: dddddddd-0000-0000-0000-000000000004
+  properties:
+    policy:
+      ref: <caret>

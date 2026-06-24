@@ -3,5 +3,11 @@
 # airlock-iam-config-plugin Changelog
 
 ## [Unreleased]
+
 ### Added
-- Initial scaffold created from [IntelliJ Platform Plugin Template](https://github.com/JetBrains/intellij-platform-plugin-template)
+
+- Go to definition from `ref:` / `parentRef:` values to the plugin `id:` they point at, across files.
+- Find usages of a plugin `id:` — lists every `ref:` / `parentRef:` that points at it.
+- Code completion for `ref:` / `parentRef:` values (existing plugins, by display name) and `type:`
+  values (bundled Airlock IAM 8.6 catalog plus project-local types).
+- Inspections for dangling references and duplicate plugin ids.

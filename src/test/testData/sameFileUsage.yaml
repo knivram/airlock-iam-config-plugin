@@ -1,0 +1,13 @@
+schemaVersion: iam.airlock.com/v1.1
+type: IamConfig
+metadata:
+  iamVersion: '8.6'
+spec:
+- type: JdbcConnectionPool
+  id: f0d2a309-8eb4-4574-a622-503d6e5f47be
+  displayName: PostgreSQL Database Connection
+- type: PluginA
+  id: bbbbbbbb-0000-0000-0000-000000000002
+  properties:
+    sqlDataSource:
+      ref: f0d2a309-8eb4-4574-a622-503d6e5f47be
