@@ -26,6 +26,10 @@ object IamConfigPsi {
     const val ID_KEY: String = "id"
     const val TYPE_KEY: String = "type"
     const val DISPLAY_NAME_KEY: String = "displayName"
+    const val PROPERTIES_KEY: String = "properties"
+
+    /** Sequence/value wrapper keys that sit between a property and the child plugin mapping. */
+    val WRAPPER_KEYS: Set<String> = setOf("pluginList", "plugin", "pluginMap")
 
     private const val ROOT_TYPE = "IamConfig"
     private const val SCHEMA_KEY = "schemaVersion"
@@ -69,4 +73,55 @@ object IamConfigPsi {
     }
 
     data class DefinitionInfo(val id: String, val type: String, val displayName: String?)
+
+    /** The (parentType, propertyName) a child plugin mapping occupies inside a parent's `properties:`. */
+    data class Slot(val parentType: String, val propertyName: String)
+
+    /** A mapping that represents a plugin instance: has a `type:` (definition) or a `ref:` (link). */
+    fun isPluginMapping(mapping: YAMLMapping): Boolean =
+        mapping.getKeyValueByKey(TYPE_KEY) != null || REF_KEYS.any { mapping.getKeyValueByKey(it) != null }
+
+    /** True if [keyValue] is a direct child of a `properties:` mapping (i.e. a plugin property). */
+    fun isDirectChildOfProperties(keyValue: YAMLKeyValue): Boolean {
+        val owner = keyValue.parentMapping ?: return false
+        val ownerKv = owner.parent as? YAMLKeyValue ?: return false
+        return ownerKv.keyText == PROPERTIES_KEY
+    }
+
+    /**
+     * The `type:` of the plugin mapping that directly owns the given `properties:` key-value
+     * (i.e. the enclosing plugin's type), or null.
+     */
+    fun enclosingPluginType(propertiesKv: YAMLKeyValue): String? {
+        if (propertiesKv.keyText != PROPERTIES_KEY) return null
+        val ownerMapping = propertiesKv.parentMapping ?: return null
+        return ownerMapping.getKeyValueByKey(TYPE_KEY)?.valueText?.takeIf { it.isNotBlank() }
+    }
+
+    /**
+     * The (parentType, propertyName) slot a child plugin mapping occupies, or null if it is a
+     * top-level `spec:` item (no slot) or the structure is unrecognised.
+     *
+     * Collapses every container form (direct, ref, pluginList, pluginMap, plugin wrapper) by climbing
+     * the PSI parent chain until the first [YAMLKeyValue] that is a direct child of a `properties:`
+     * mapping; wrapper key-values (`pluginList`/`plugin`/`pluginMap`) and the `pluginMap` inner-key
+     * level are naturally skipped because they fail the properties-direct test.
+     */
+    fun slotOf(childMapping: YAMLMapping): Slot? {
+        val propertyKv = enclosingPropertyKeyValue(childMapping) ?: return null
+        val propertiesKv = propertyKv.parentMapping?.parent as? YAMLKeyValue ?: return null
+        val parentType = enclosingPluginType(propertiesKv) ?: return null
+        return Slot(parentType, propertyKv.keyText)
+    }
+
+    private fun enclosingPropertyKeyValue(childMapping: YAMLMapping): YAMLKeyValue? {
+        var node: PsiElement? = childMapping
+        while (node != null) {
+            if (node is YAMLKeyValue && node.keyText !in WRAPPER_KEYS && isDirectChildOfProperties(node)) {
+                return node
+            }
+            node = node.parent
+        }
+        return null
+    }
 }

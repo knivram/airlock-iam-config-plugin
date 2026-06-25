@@ -8,8 +8,8 @@
         <ul>
             <li><b>Go to definition</b> &mdash; jump from a <code>ref:</code>/<code>parentRef:</code> to the plugin <code>id:</code> it points at.</li>
             <li><b>Find usages</b> &mdash; from a plugin's <code>id:</code>, list every place it is referenced.</li>
-            <li><b>Code completion</b> &mdash; complete <code>ref:</code> values (pick an existing plugin by name) and <code>type:</code> values (all Airlock plugin types).</li>
-            <li><b>Inspections</b> &mdash; flag dangling references and duplicate plugin ids.</li>
+            <li><b>Code completion</b> &mdash; complete <code>ref:</code> values (pick an existing plugin by name), <code>type:</code> values (constrained to the plugins valid for the surrounding slot), and plugin <b>property names</b>.</li>
+            <li><b>Inspections</b> &mdash; flag dangling references and duplicate plugin ids, plus warn on unknown properties and wrong child plugin types for known Airlock plugin types.</li>
         </ul>
         <p>Everything is scoped to a single file, so duplicating a config (e.g. a production copy) does not cause false duplicate-id warnings.</p>
     ]]></description>
@@ -57,5 +57,26 @@
                          enabledByDefault="true"
                          level="WARNING"
                          implementationClass="com.github.knivram.airlockiamconfigplugin.inspection.DuplicateIdInspection"/>
+        <localInspection language="yaml"
+                         shortName="AirlockUnknownProperty"
+                         key="inspection.unknownProperty.displayName"
+                         groupKey="inspection.group.name"
+                         enabledByDefault="true"
+                         level="WEAK WARNING"
+                         implementationClass="com.github.knivram.airlockiamconfigplugin.inspection.UnknownPropertyInspection"/>
+        <localInspection language="yaml"
+                         shortName="AirlockWrongChildType"
+                         key="inspection.wrongChildType.displayName"
+                         groupKey="inspection.group.name"
+                         enabledByDefault="true"
+                         level="WEAK WARNING"
+                         implementationClass="com.github.knivram.airlockiamconfigplugin.inspection.WrongChildTypeInspection"/>
+        <localInspection language="yaml"
+                         shortName="AirlockMissingMandatoryProperty"
+                         key="inspection.missingMandatory.displayName"
+                         groupKey="inspection.group.name"
+                         enabledByDefault="false"
+                         level="WARNING"
+                         implementationClass="com.github.knivram.airlockiamconfigplugin.inspection.MissingMandatoryPropertyInspection"/>
     </extensions>
 </idea-plugin>

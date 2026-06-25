@@ -96,6 +96,94 @@ class CompletionTest : BasePlatformTestCase() {
         assertContainsElements(lookups!!, "ZzzCustomAlpha", "ZzzCustomBeta")
     }
 
+    fun testPropertyNameCompletionOffersSchemaKeys() {
+        myFixture.configureByText(
+            "c.yaml",
+            """
+            schemaVersion: iam.airlock.com/v1.1
+            type: IamConfig
+            metadata: {}
+            spec:
+            - type: JdbcConnectionPool
+              id: db-1
+              properties:
+                <caret>
+            """.trimIndent(),
+        )
+        myFixture.completeBasic()
+        val lookups = myFixture.lookupElementStrings
+        assertNotNull("property-name completion should offer a list", lookups)
+        assertContainsElements(lookups!!, "url", "maximumPoolSize", "driverClass")
+    }
+
+    fun testPropertyNameCompletionHidesAlreadyPresentKeys() {
+        myFixture.configureByText(
+            "c.yaml",
+            """
+            schemaVersion: iam.airlock.com/v1.1
+            type: IamConfig
+            metadata: {}
+            spec:
+            - type: JdbcConnectionPool
+              id: db-1
+              properties:
+                url: jdbc:postgresql://localhost/db
+                u<caret>
+            """.trimIndent(),
+        )
+        myFixture.completeBasic()
+        val lookups = myFixture.lookupElementStrings
+        assertNotNull(lookups)
+        assertFalse("an already-present key must not be re-offered", lookups!!.contains("url"))
+        assertContainsElements(lookups, "user") // a different, still-absent key remains
+    }
+
+    fun testPropertyNameCompletionSuppressedForUnknownType() {
+        myFixture.configureByText(
+            "c.yaml",
+            """
+            schemaVersion: iam.airlock.com/v1.1
+            type: IamConfig
+            metadata: {}
+            spec:
+            - type: ZzzCustomUnknownPlugin
+              id: x
+              properties:
+                <caret>
+            """.trimIndent(),
+        )
+        myFixture.completeBasic()
+        myFixture.lookupElementStrings?.let {
+            assertFalse("no schema keys for a custom type", it.contains("url"))
+        }
+    }
+
+    fun testSlotScopedTypeCompletionOffersAssignableAndExcludesNonAssignable() {
+        // passwordPolicy is a Plugin-Link slot of PasswordSettings; only its assignable types are offered.
+        myFixture.configureByText(
+            "c.yaml",
+            """
+            schemaVersion: iam.airlock.com/v1.1
+            type: IamConfig
+            metadata: {}
+            spec:
+            - type: PasswordSettings
+              id: pw-1
+              properties:
+                passwordPolicy:
+                  type: <caret>
+            """.trimIndent(),
+        )
+        myFixture.completeBasic()
+        val lookups = myFixture.lookupElementStrings
+        assertNotNull("slot-scoped type completion should offer a list", lookups)
+        assertContainsElements(lookups!!, "SimplePasswordPolicy")
+        assertFalse(
+            "a non-assignable catalog type must not be offered in this slot",
+            lookups.contains("JdbcConnectionPool"),
+        )
+    }
+
     fun testNoCompletionInNonIamConfigFile() {
         // ref position in a non-IamConfig file must NOT offer project plugin ids.
         myFixture.configureByText(

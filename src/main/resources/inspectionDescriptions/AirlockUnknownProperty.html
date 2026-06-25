@@ -1,0 +1,12 @@
+<html>
+<body>
+Reports a key under a plugin's <code>properties:</code> mapping that the plugin type does not declare
+in the bundled Airlock IAM plugin catalog.
+<p>
+    Only plugin types known to the catalog are checked, and only when the type actually documents
+    properties, so custom or unrecognised plugins never produce false positives. Structural keys
+    (<code>pluginList</code>, <code>pluginMap</code>, <code>plugin</code>) and value-override keys
+    are not flagged.
+</p>
+</body>
+</html>

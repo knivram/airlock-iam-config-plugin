@@ -1,0 +1,12 @@
+<html>
+<body>
+Reports a child plugin placed in a plugin-valued property slot whose documented list of assignable
+plugin types does not include the child's type.
+<p>
+    The child's type is taken from its own <code>type:</code>, or resolved from a same-file
+    <code>ref:</code>. Only known parent types with a non-empty assignable list are checked, and only a
+    child type that is itself known to the catalog and provably not assignable is flagged, so custom
+    plugins never produce false positives.
+</p>
+</body>
+</html>
