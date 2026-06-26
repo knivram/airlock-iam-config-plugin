@@ -54,7 +54,7 @@ jobs:
 
       # Check out the current repository
       - name: Fetch Sources
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       # Set up the Java environment for the next steps
       - name: Setup Java
@@ -94,7 +94,7 @@ jobs:
 
       # Check out the current repository
       - name: Fetch Sources
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       # Set up the Java environment for the next steps
       - name: Setup Java
@@ -137,7 +137,7 @@ jobs:
 
       # Check out the current repository
       - name: Fetch Sources
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       # Set up the Java environment for the next steps
       - name: Setup Java
@@ -178,7 +178,7 @@ jobs:
     steps:
       # Need full history + tags to compare the version against the existing tag list.
       - name: Fetch Sources
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
