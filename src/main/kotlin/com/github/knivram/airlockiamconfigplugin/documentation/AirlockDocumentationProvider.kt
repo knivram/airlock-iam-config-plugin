@@ -3,6 +3,7 @@ package com.github.knivram.airlockiamconfigplugin.documentation
 import com.github.knivram.airlockiamconfigplugin.catalog.AirlockPluginCatalog
 import com.github.knivram.airlockiamconfigplugin.catalog.CatalogEntry
 import com.github.knivram.airlockiamconfigplugin.catalog.CatalogProperty
+import com.github.knivram.airlockiamconfigplugin.psi.IamConfigFileModel
 import com.github.knivram.airlockiamconfigplugin.psi.IamConfigPsi
 import com.intellij.lang.documentation.AbstractDocumentationProvider
 import com.intellij.lang.documentation.DocumentationMarkup
@@ -67,6 +68,19 @@ class AirlockDocumentationProvider : AbstractDocumentationProvider() {
                 val parentType = IamConfigPsi.enclosingPluginType(propertiesKv) ?: return null
                 if (AirlockPluginCatalog.getInstance().property(parentType, kv.keyText) == null) return null
                 return kv
+            }
+        }
+
+        // Target 4: caret on a `ref:`/`parentRef:` VALUE -> document the plugin it points at. Resolve the
+        // target definition HERE and return its `id:` key-value, so Quick Doc renders via the same robust
+        // path as Target 3. (Relying on the platform to document the resolved reference is unreliable: a
+        // UUID-shaped value gets claimed by the platform's built-in UUID support after edits, and the ref
+        // doc falls back to the generic popup.) getCustomDocumentationElement is consulted before the
+        // platform's reference/symbol target, so returning the definition here wins.
+        if (scalar != null && IamConfigPsi.isReferenceValueScalar(scalar)) {
+            val id = scalar.textValue
+            if (id.isNotBlank()) {
+                IamConfigFileModel.of(yamlFile).definitions[id]?.firstOrNull { it.isValid }?.let { return it }
             }
         }
 

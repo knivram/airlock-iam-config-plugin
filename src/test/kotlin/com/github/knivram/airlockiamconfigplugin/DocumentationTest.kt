@@ -16,6 +16,21 @@ class DocumentationTest : BasePlatformTestCase() {
 
     private val provider = AirlockDocumentationProvider()
 
+    /** A definition (JdbcConnectionPool "My Pool") plus a ref to it, caret on the ref value. */
+    private val REF_FIXTURE = """
+        schemaVersion: iam.airlock.com/v1.1
+        type: IamConfig
+        spec:
+        - type: JdbcConnectionPool
+          id: my-pool
+          displayName: My Pool
+        - type: SomePlugin
+          id: consumer
+          properties:
+            sqlDataSource:
+              ref: my<caret>-pool
+    """.trimIndent()
+
     /** The doc element the provider claims at the current caret, or null. */
     private fun targetAtCaret(text: String): Any? {
         val file = myFixture.configureByText("config.yaml", text) as YAMLFile
@@ -176,17 +191,45 @@ class DocumentationTest : BasePlatformTestCase() {
         val offset = myFixture.caretOffset
         val ctx = file.findElementAt(offset)
 
-        // We do not claim the ref scalar ourselves.
-        assertNull(
-            "the provider must not claim a ref value; the platform resolves the reference",
-            provider.getCustomDocumentationElement(myFixture.editor, file, ctx, offset),
-        )
+        // The provider claims the ref value itself (Target 4) and resolves it to the target definition's
+        // `id:` key-value, so Quick Doc stays robust instead of relying on the platform's reference/UUID path.
+        val claimed = provider.getCustomDocumentationElement(myFixture.editor, file, ctx, offset)
+        assertInstanceOf(claimed, YAMLKeyValue::class.java)
+        assertEquals("ref doc element is the target plugin's id", "id", (claimed as YAMLKeyValue).keyText)
+        assertEquals("my-pool", claimed.valueText)
 
-        // The platform path: resolve the reference to the target id key-value, render that.
-        val resolved = file.findReferenceAt(offset)?.resolve() as? YAMLKeyValue
-        assertNotNull("ref must resolve to the target plugin id", resolved)
-        val doc = provider.generateDoc(resolved, ctx)
+        val doc = provider.generateDoc(claimed, ctx)
         assertNotNull("instance doc for the resolved id", doc)
+        assertTrue(doc!!.contains("JdbcConnectionPool"))
+        assertTrue(doc.contains("My Pool"))
+    }
+
+    // Hovering a ref VALUE must produce the target plugin's doc via OUR provider (Target 4), not rely on
+    // the platform's reference/UUID documentation. docAtCaret exercises getCustomDocumentationElement +
+    // generateDoc, exactly what the IDE uses.
+    fun testRefValueDocResolvesToTargetPluginViaProvider() {
+        val doc = docAtCaret(REF_FIXTURE)
+        assertNotNull("hovering a ref must show the target plugin's doc", doc)
+        assertTrue("ref doc shows the target type", doc!!.contains("JdbcConnectionPool"))
+        assertTrue("ref doc shows the target displayName", doc.contains("My Pool"))
+    }
+
+    // The reported bug: the ref doc stops working after edits. A structural PSI invalidation (AST drop /
+    // background reparse, which dropPsiCaches simulates) must NOT break it.
+    fun testRefValueDocSurvivesPsiInvalidation() {
+        val file = myFixture.configureByText("config.yaml", REF_FIXTURE) as YAMLFile
+        val offset = myFixture.caretOffset
+        // warm: the doc resolves on a fresh file
+        assertNotNull(provider.getCustomDocumentationElement(myFixture.editor, file, file.findElementAt(offset), offset))
+
+        com.intellij.psi.impl.PsiManagerEx.getInstanceEx(project).dropPsiCaches()
+
+        val current = myFixture.file as YAMLFile
+        val ctx = current.findElementAt(offset)
+        val target = provider.getCustomDocumentationElement(myFixture.editor, current, ctx, offset)
+        assertNotNull("ref doc element must still resolve after a PSI invalidation", target)
+        val doc = provider.generateDoc(target, ctx)
+        assertNotNull("ref doc must still render after a PSI invalidation", doc)
         assertTrue(doc!!.contains("JdbcConnectionPool"))
         assertTrue(doc.contains("My Pool"))
     }

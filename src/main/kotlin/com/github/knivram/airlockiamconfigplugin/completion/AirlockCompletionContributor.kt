@@ -187,6 +187,9 @@ class AirlockCompletionContributor : CompletionContributor() {
                 ?.takeIf { it.isNotEmpty() }
                 ?.toSet()
 
+            // Case-insensitive matching so typing "no" matches a "No ..." display name (or type/id),
+            // regardless of the IDE's "Case sensitive completion" setting.
+            val out = result.caseInsensitive()
             val seen = HashSet<String>()
             for (info in IamConfigFileModel.of(file).definitionInfos) {
                 if (assignable != null && info.type !in assignable) continue
@@ -199,7 +202,7 @@ class AirlockCompletionContributor : CompletionContributor() {
                     .withLookupStrings(listOfNotNull(info.id, info.type, info.displayName))
                 // Prefer plugins that have a human-readable name.
                 val priority = if (info.displayName != null) 100.0 else 50.0
-                result.addElement(PrioritizedLookupElement.withPriority(element, priority))
+                out.addElement(PrioritizedLookupElement.withPriority(element, priority))
             }
         }
 

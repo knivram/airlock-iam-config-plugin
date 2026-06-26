@@ -1,11 +1,19 @@
 <html>
 <body>
 Reports a known-type plugin that omits a property the Airlock IAM catalog marks as mandatory.
+The missing property is reported as an error on the plugin's <code>type:</code>.
 <p>
-    Disabled by default: in Airlock IAM mandatory-ness is frequently conditional (a property is only
-    required given some other setting), so unconditionally requiring every documented-mandatory
-    property is noisy. Enable it for a stricter completeness check. Only plugin types known to the
-    catalog are checked.
+    A quick-fix, <b>Add missing mandatory properties</b>, inserts the missing keys under the plugin's
+    <code>properties:</code> mapping (creating <code>properties:</code> when absent), each with an empty
+    value ready to fill in.
+</p>
+<p>
+    Reported as an error and enabled by default. Only plugin types known to the catalog are checked.
+</p>
+<p>
+    Note: in Airlock IAM mandatory-ness is sometimes conditional (a property is only required given some
+    other setting). The mandatory flag is taken from the documentation, so a few properties that are only
+    conditionally required may still be reported.
 </p>
 </body>
 </html>

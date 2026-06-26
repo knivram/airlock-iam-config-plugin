@@ -4,14 +4,16 @@
     <name>Airlock IAM Config</name>
     <vendor>knivram</vendor>
     <description><![CDATA[
-        <p>Editor support for <b>Airlock IAM</b> configuration files (<code>type: IamConfig</code>, <code>schemaVersion: iam.airlock.com/&hellip;</code>).</p>
+        <p>Editor support for <b>Airlock IAM</b> configuration files (<code>type: IamConfig</code>, <code>schemaVersion: iam.airlock.com/&hellip;</code>), powered by a bundled catalog of the IAM 8.6 plugin types &mdash; their properties, allowed child plugins and documentation.</p>
         <ul>
-            <li><b>Go to definition</b> &mdash; jump from a <code>ref:</code>/<code>parentRef:</code> to the plugin <code>id:</code> it points at.</li>
-            <li><b>Find usages</b> &mdash; from a plugin's <code>id:</code>, list every place it is referenced.</li>
-            <li><b>Code completion</b> &mdash; complete <code>ref:</code> values (pick an existing plugin by name), <code>type:</code> values (constrained to the plugins valid for the surrounding slot), and plugin <b>property names</b>.</li>
-            <li><b>Inspections</b> &mdash; flag dangling references and duplicate plugin ids, plus warn on unknown properties and wrong child plugin types for known Airlock plugin types.</li>
+            <li><b>Navigation</b> &mdash; jump from a <code>ref:</code>/<code>parentRef:</code> to the plugin <code>id:</code> it points at; from an <code>id:</code>, Find Usages (or Ctrl/Cmd+B) lists everything that references it.</li>
+            <li><b>Code completion</b> &mdash; <code>ref:</code> values (existing plugins, shown by display name, matched case-insensitively); <code>type:</code> values (constrained to the plugins valid for the surrounding slot, else the full catalog); plugin <b>property names</b>; plugin-definition keys (<code>type</code>/<code>id</code>/<code>displayName</code>/<code>comment</code>/<code>parentRef</code>/<code>properties</code>); <code>pluginList</code>/<code>pluginMap</code> scaffolds; and <code>env:</code>/<code>var:</code> for environment-specific values.</li>
+            <li><b>Quick documentation</b> &mdash; hover (or Ctrl-Q) a <code>type:</code>, a property key, or a <code>ref:</code>/<code>id:</code> to see the plugin's description, properties and allowed child types.</li>
+            <li><b>Folding</b> &mdash; a <code>ref:</code> id is shown as the referenced plugin's display name; expand it to see the id.</li>
+            <li><b>Inspections</b> &mdash; dangling references, duplicate ids, unknown properties, wrong child plugin types, missing mandatory properties (with a quick-fix that adds them), and variable/environment misconfigurations.</li>
+            <li>A dedicated <b>file icon</b> for IamConfig files.</li>
         </ul>
-        <p>Everything is scoped to a single file, so duplicating a config (e.g. a production copy) does not cause false duplicate-id warnings.</p>
+        <p>Everything is scoped to a single file (so duplicating a config &mdash; e.g. a production copy &mdash; does not cause false duplicate-id warnings), and validation only applies to plugin types known in the bundled catalog, so custom plugins are never flagged.</p>
     ]]></description>
 
     <depends>com.intellij.modules.platform</depends>
@@ -48,6 +50,10 @@
         <!-- Labels ref:/parentRef: usages in the Find Usages tool window. -->
         <usageTypeProvider implementation="com.github.knivram.airlockiamconfigplugin.usage.IamConfigUsageTypeProvider"/>
 
+        <!-- Fold a ref:/parentRef: id to the resolved plugin's displayName (display-only; text stays the id). -->
+        <lang.foldingBuilder language="yaml"
+                             implementationClass="com.github.knivram.airlockiamconfigplugin.folding.RefDisplayNameFoldingBuilder"/>
+
         <!-- Validation. -->
         <localInspection language="yaml"
                          shortName="AirlockDanglingReference"
@@ -81,8 +87,8 @@
                          shortName="AirlockMissingMandatoryProperty"
                          key="inspection.missingMandatory.displayName"
                          groupKey="inspection.group.name"
-                         enabledByDefault="false"
-                         level="WARNING"
+                         enabledByDefault="true"
+                         level="ERROR"
                          implementationClass="com.github.knivram.airlockiamconfigplugin.inspection.MissingMandatoryPropertyInspection"/>
         <localInspection language="yaml"
                          shortName="AirlockVariableEnv"

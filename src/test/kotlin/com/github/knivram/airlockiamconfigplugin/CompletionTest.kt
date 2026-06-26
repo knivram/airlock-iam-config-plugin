@@ -18,6 +18,12 @@ class CompletionTest : BasePlatformTestCase() {
         assertContainsElements(lookups!!, DB_ID, POLICY_ID)
     }
 
+    // NOTE: ref completion is made case-insensitive via CompletionResultSet.caseInsensitive() in
+    // addRefCompletions (so e.g. "no" matches a "No ..." display name regardless of the IDE's
+    // "Case sensitive completion" setting). This is intentionally NOT unit-tested: BasePlatformTestCase's
+    // completion matches case-insensitively regardless of completionCaseSensitive, so a harness test
+    // passes with or without the fix and would give false confidence. Verified manually in the IDE.
+
     fun testRefCompletionPresentsDisplayNameButInsertsId() {
         // Core contract: the lookup STRING (what is inserted) is the id; the PRESENTED text is the displayName.
         myFixture.configureByFile("refComplete.yaml")

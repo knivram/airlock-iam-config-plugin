@@ -23,7 +23,10 @@ class PluginIdReference(scalar: YAMLScalar, private val id: String) :
     override fun multiResolve(incompleteCode: Boolean): Array<ResolveResult> {
         if (id.isBlank()) return ResolveResult.EMPTY_ARRAY
         val file = element.containingFile as? YAMLFile ?: return ResolveResult.EMPTY_ARRAY
-        val definitions = IamConfigFileModel.of(file).definitions[id] ?: return ResolveResult.EMPTY_ARRAY
+        // Filter invalid elements defensively: never hand the platform an invalid resolve target (it
+        // would make Quick Documentation fall back to its generic popup instead of the plugin doc).
+        val definitions = IamConfigFileModel.of(file).definitions[id]?.filter { it.isValid }
+        if (definitions.isNullOrEmpty()) return ResolveResult.EMPTY_ARRAY
         return PsiElementResolveResult.createResults(definitions)
     }
 

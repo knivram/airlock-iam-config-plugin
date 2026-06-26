@@ -2,6 +2,7 @@ package com.github.knivram.airlockiamconfigplugin.psi
 
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
+import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.yaml.psi.YAMLFile
 import org.jetbrains.yaml.psi.YAMLKeyValue
@@ -18,7 +19,7 @@ import org.jetbrains.yaml.psi.YAMLScalar
  */
 object IamConfigFileModel {
 
-    /** Per-file index. All PSI elements belong to [file] and stay valid until it is modified. */
+    /** Per-file index. All PSI elements belong to [file] and stay valid until the PSI is modified. */
     class Model(
         /** id value -> the `id:` key-values declaring it in this file (>1 means a same-file duplicate). */
         val definitions: Map<String, List<YAMLKeyValue>>,
@@ -37,7 +38,12 @@ object IamConfigFileModel {
     fun of(file: YAMLFile): Model {
         if (!IamConfigPsi.isIamConfigFile(file)) return EMPTY
         return CachedValuesManager.getCachedValue(file) {
-            CachedValueProvider.Result.create(build(file), file)
+            // The Model captures PSI nodes from [file]; depend on MODIFICATION_COUNT (not the `file`
+            // element, whose stamp tracks only document edits) so the cache is also dropped on
+            // structural PSI invalidations (AST drop / background reparse). Otherwise a stale Model
+            // could hand back now-invalid `id:`/`ref:` nodes, breaking resolve and falling Quick Doc
+            // back to the platform generic.
+            CachedValueProvider.Result.create(build(file), PsiModificationTracker.MODIFICATION_COUNT)
         }
     }
 

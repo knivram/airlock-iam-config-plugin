@@ -6,6 +6,7 @@ import com.github.knivram.airlockiamconfigplugin.inspection.MissingMandatoryProp
 import com.github.knivram.airlockiamconfigplugin.inspection.UnknownPropertyInspection
 import com.github.knivram.airlockiamconfigplugin.inspection.VariableEnvInspection
 import com.github.knivram.airlockiamconfigplugin.inspection.WrongChildTypeInspection
+import com.github.knivram.airlockiamconfigplugin.psi.IamConfigFileModel
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
@@ -511,10 +512,30 @@ class InspectionTest : BasePlatformTestCase() {
         )
     }
 
-    // ---- MissingMandatory (off by default) ----------------------------------------------------
+    // ---- MissingMandatory (error, enabled by default) -----------------------------------------
 
-    fun testMissingMandatoryDisabledByDefault() {
-        // No explicit enableInspections -> the default profile is used, where this inspection is OFF.
+    fun testMissingMandatoryRegisteredAsEnabledErrorByDefault() {
+        // The inspection's deliverable is its registration: enabledByDefault="true" level="ERROR".
+        // The test harness clears per-tool profile state, so assert the registration directly from the
+        // packaged plugin.xml (the authoritative source of the enabled/level defaults).
+        val pluginXml = javaClass.classLoader.getResourceAsStream("META-INF/plugin.xml")
+            ?.bufferedReader()?.use { it.readText() }
+        assertNotNull("plugin.xml must be on the test classpath", pluginXml)
+        val line = pluginXml!!.lineSequence()
+            .firstOrNull { it.contains("shortName=\"AirlockMissingMandatoryProperty\"") }
+        assertNotNull("the inspection must be registered in plugin.xml", line)
+        assertTrue(
+            "AirlockMissingMandatoryProperty must be enabledByDefault=\"true\"",
+            line!!.contains("enabledByDefault=\"true\""),
+        )
+        assertTrue(
+            "AirlockMissingMandatoryProperty must be level=\"ERROR\"",
+            line.contains("level=\"ERROR\""),
+        )
+    }
+
+    fun testMissingMandatoryIsError() {
+        myFixture.enableInspections(MissingMandatoryPropertyInspection())
         myFixture.configureByText(
             "config.yaml",
             """
@@ -529,8 +550,291 @@ class InspectionTest : BasePlatformTestCase() {
                   type: SimplePasswordPolicy
             """.trimIndent(),
         )
+        val highlights = myFixture.doHighlighting().byDescription("passwordService")
+        assertSize(1, highlights)
+        val info = highlights.single()
+        assertEquals(HighlightSeverity.ERROR, info.severity)
+        // Pin the Kotlin-class-name-style behaviour: the error lands on the plugin's `type:` VALUE
+        // element (the type name), not the whole `type:` key-value or the whole mapping.
+        assertEquals(
+            "the missing-mandatory error must highlight the plugin's type value element",
+            "PasswordSettings",
+            myFixture.file.text.substring(info.startOffset, info.endOffset),
+        )
+    }
+
+    fun testMissingMandatoryQuickFixAddsKeysWhenPropertiesPresent() {
+        myFixture.enableInspections(MissingMandatoryPropertyInspection())
+        myFixture.configureByText(
+            "config.yaml",
+            """
+            schemaVersion: iam.airlock.com/v1.1
+            type: IamConfig
+            metadata: {}
+            spec:
+            - type: PasswordSettings
+              id: pw-1
+              properties:
+                passwordPolicy:
+                  type: SimplePasswordPolicy
+            """.trimIndent(),
+        )
+        val fix = myFixture.getAllQuickFixes()
+            .first { it.text == "Add missing mandatory properties" }
+        myFixture.launchAction(fix)
+        myFixture.checkResult(
+            """
+            schemaVersion: iam.airlock.com/v1.1
+            type: IamConfig
+            metadata: {}
+            spec:
+            - type: PasswordSettings
+              id: pw-1
+              properties:
+                passwordPolicy:
+                  type: SimplePasswordPolicy
+                passwordService:
+            """.trimIndent(),
+        )
+    }
+
+    fun testMissingMandatoryQuickFixCreatesPropertiesWhenAbsent() {
+        myFixture.enableInspections(MissingMandatoryPropertyInspection())
+        myFixture.configureByText(
+            "config.yaml",
+            """
+            schemaVersion: iam.airlock.com/v1.1
+            type: IamConfig
+            metadata: {}
+            spec:
+            - type: PasswordSettings
+              id: pw-1
+            """.trimIndent(),
+        )
+        val fix = myFixture.getAllQuickFixes()
+            .first { it.text == "Add missing mandatory properties" }
+        myFixture.launchAction(fix)
+        myFixture.checkResult(
+            """
+            schemaVersion: iam.airlock.com/v1.1
+            type: IamConfig
+            metadata: {}
+            spec:
+            - type: PasswordSettings
+              id: pw-1
+              properties:
+                passwordService:
+            """.trimIndent(),
+        )
+        // The error is resolved after the fix (the now-present, empty-valued key satisfies the check).
+        assertEmpty(myFixture.doHighlighting().byDescription("passwordService"))
+    }
+
+    fun testMissingMandatoryQuickFixResultIsValidYaml() {
+        // After creating properties: from scratch, the file still parses and the definition is found.
+        myFixture.enableInspections(MissingMandatoryPropertyInspection())
+        myFixture.configureByText(
+            "config.yaml",
+            """
+            schemaVersion: iam.airlock.com/v1.1
+            type: IamConfig
+            metadata: {}
+            spec:
+            - type: PasswordSettings
+              id: pw-1
+            """.trimIndent(),
+        )
+        val fix = myFixture.getAllQuickFixes()
+            .first { it.text == "Add missing mandatory properties" }
+        myFixture.launchAction(fix)
+        val file = myFixture.file as org.jetbrains.yaml.psi.YAMLFile
+        val model = IamConfigFileModel.of(file)
+        assertNotNull("pw-1 definition must survive the fix as valid YAML", model.definitions["pw-1"])
+    }
+
+    fun testMissingMandatoryQuickFixAddsOnlyMissingKeysWhenPartiallyPresent() {
+        // A type with several mandatory props (OAuth2SsoFlowClientSettings: httpClient,
+        // authorizationEndpointURL, tokenEndpointURL, providerId, clientRedirectURI, clientId,
+        // clientSecret). Two are already present; the fix must append ONLY the five still-missing keys,
+        // in catalog order, and must NOT touch the present ones or any non-mandatory key.
+        myFixture.enableInspections(MissingMandatoryPropertyInspection())
+        myFixture.configureByText(
+            "config.yaml",
+            """
+            schemaVersion: iam.airlock.com/v1.1
+            type: IamConfig
+            metadata: {}
+            spec:
+            - type: OAuth2SsoFlowClientSettings
+              id: oauth-1
+              properties:
+                httpClient:
+                  ref: http-1
+                clientId: my-client
+            """.trimIndent(),
+        )
+        val fix = myFixture.getAllQuickFixes()
+            .first { it.text == "Add missing mandatory properties" }
+        myFixture.launchAction(fix)
+        myFixture.checkResult(
+            """
+            schemaVersion: iam.airlock.com/v1.1
+            type: IamConfig
+            metadata: {}
+            spec:
+            - type: OAuth2SsoFlowClientSettings
+              id: oauth-1
+              properties:
+                httpClient:
+                  ref: http-1
+                clientId: my-client
+                authorizationEndpointURL:
+                tokenEndpointURL:
+                providerId:
+                clientRedirectURI:
+                clientSecret:
+            """.trimIndent(),
+        )
+    }
+
+    fun testMissingMandatoryQuickFixCreatesPropertiesWithAllMissingKeys() {
+        // No properties: at all on a multi-mandatory type. The fix must create the `properties:` block
+        // and seed it with ALL mandatory keys in catalog order (the create-path seed plus the rest).
+        myFixture.enableInspections(MissingMandatoryPropertyInspection())
+        myFixture.configureByText(
+            "config.yaml",
+            """
+            schemaVersion: iam.airlock.com/v1.1
+            type: IamConfig
+            metadata: {}
+            spec:
+            - type: OAuth2SsoFlowClientSettings
+              id: oauth-1
+            """.trimIndent(),
+        )
+        val fix = myFixture.getAllQuickFixes()
+            .first { it.text == "Add missing mandatory properties" }
+        myFixture.launchAction(fix)
+        myFixture.checkResult(
+            """
+            schemaVersion: iam.airlock.com/v1.1
+            type: IamConfig
+            metadata: {}
+            spec:
+            - type: OAuth2SsoFlowClientSettings
+              id: oauth-1
+              properties:
+                httpClient:
+                authorizationEndpointURL:
+                tokenEndpointURL:
+                providerId:
+                clientRedirectURI:
+                clientId:
+                clientSecret:
+            """.trimIndent(),
+        )
+        // All mandatory keys are now present -> the error clears.
+        assertEmpty(myFixture.doHighlighting().byDescription("missing mandatory property"))
+    }
+
+    fun testMissingMandatoryQuickFixMovesCaretToFirstAddedProperty() {
+        myFixture.enableInspections(MissingMandatoryPropertyInspection())
+        myFixture.configureByText(
+            "config.yaml",
+            """
+            schemaVersion: iam.airlock.com/v1.1
+            type: IamConfig
+            metadata: {}
+            spec:
+            - type: OAuth2SsoFlowClientSettings
+              id: oauth-1
+            """.trimIndent(),
+        )
+        val fix = myFixture.getAllQuickFixes()
+            .first { it.text == "Add missing mandatory properties" }
+        myFixture.launchAction(fix)
+
+        // httpClient is the first mandatory key (catalog order) -> the caret lands on its line.
+        val doc = myFixture.editor.document
+        val caret = myFixture.editor.caretModel.offset
+        val firstPropOffset = doc.text.indexOf("httpClient:")
+        assertEquals(
+            "caret should move to the first added property's line",
+            doc.getLineNumber(firstPropOffset),
+            doc.getLineNumber(caret),
+        )
+        assertTrue("caret should sit at/after the inserted key", caret >= firstPropOffset)
+    }
+
+    fun testMissingMandatoryQuickFixIsIdempotent() {
+        // Running the fix a second time (everything already present) must be a no-op: no duplicate keys,
+        // text unchanged. Proves the present-key skip / toAdd-empty guard.
+        myFixture.enableInspections(MissingMandatoryPropertyInspection())
+        myFixture.configureByText(
+            "config.yaml",
+            """
+            schemaVersion: iam.airlock.com/v1.1
+            type: IamConfig
+            metadata: {}
+            spec:
+            - type: PasswordSettings
+              id: pw-1
+            """.trimIndent(),
+        )
+        val fix = myFixture.getAllQuickFixes()
+            .first { it.text == "Add missing mandatory properties" }
+        myFixture.launchAction(fix)
+        val afterFirst = myFixture.file.text
+        // After the first fix, passwordService is present so no quick-fix should be offered anymore.
         assertEmpty(
-            "missing mandatory must not warn under the default profile",
+            "no quick-fix once every mandatory key is present",
+            myFixture.getAllQuickFixes().filter { it.text == "Add missing mandatory properties" },
+        )
+        assertEquals(
+            "the second pass (had there been one) would not change the text",
+            afterFirst,
+            myFixture.file.text,
+        )
+    }
+
+    fun testMissingMandatoryNoErrorWhenAllPresent() {
+        myFixture.enableInspections(MissingMandatoryPropertyInspection())
+        myFixture.configureByText(
+            "config.yaml",
+            """
+            schemaVersion: iam.airlock.com/v1.1
+            type: IamConfig
+            metadata: {}
+            spec:
+            - type: PasswordSettings
+              id: pw-1
+              properties:
+                passwordService:
+                  type: SimplePasswordService
+            """.trimIndent(),
+        )
+        assertEmpty(
+            "no error when every mandatory property is present",
+            myFixture.doHighlighting().byDescription("passwordService"),
+        )
+    }
+
+    fun testMissingMandatoryUnknownTypeNotFlagged() {
+        myFixture.enableInspections(MissingMandatoryPropertyInspection())
+        myFixture.configureByText(
+            "config.yaml",
+            """
+            schemaVersion: iam.airlock.com/v1.1
+            type: IamConfig
+            metadata: {}
+            spec:
+            - type: ZzzCustomUnknownPlugin
+              id: x
+              properties:
+            """.trimIndent(),
+        )
+        assertEmpty(
+            "unknown types are never flagged",
             myFixture.doHighlighting().byDescription("missing mandatory property"),
         )
     }
@@ -553,6 +857,32 @@ class InspectionTest : BasePlatformTestCase() {
             """.trimIndent(),
         )
         assertSize(1, myFixture.doHighlighting().byDescription("passwordService"))
+    }
+
+    fun testMissingMandatoryNotFlaggedForPropertyNamedType() {
+        // Regression: a plugin property literally named `type` (a direct child of `properties:`) whose
+        // value happens to be a known catalog type (`Service`) must NOT be read as a plugin definition.
+        // The outer plugin is a custom/unknown type, so the only known `type:` in the file is the
+        // property-level one. The isPropertiesMapping guard must suppress any missing-mandatory error.
+        myFixture.enableInspections(MissingMandatoryPropertyInspection())
+        myFixture.configureByText(
+            "config.yaml",
+            """
+            schemaVersion: iam.airlock.com/v1.1
+            type: IamConfig
+            metadata: {}
+            spec:
+            - type: ZzzCustomOuterPlugin
+              id: outer-1
+              properties:
+                type: Service
+                id: some-service-name
+            """.trimIndent(),
+        )
+        assertEmpty(
+            "a property named `type` is not a plugin definition and must not be flagged",
+            myFixture.doHighlighting().byDescription("missing mandatory property"),
+        )
     }
 
     // ---- VariableEnv (variables & environments, Improvement #4) -------------------------------

@@ -1,0 +1,11 @@
+schemaVersion: iam.airlock.com/v1.1
+type: IamConfig
+metadata: {}
+spec:
+- type: JdbcConnectionPool
+  id: db-1
+- type: SomePlugin
+  id: p-1
+  properties:
+    sqlDataSource:
+      ref: db-1

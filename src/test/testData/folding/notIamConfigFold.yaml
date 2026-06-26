@@ -1,0 +1,12 @@
+schemaVersion: something.else/v1
+type: SomethingElse
+metadata: {}
+spec:
+- type: JdbcConnectionPool
+  id: db-1
+  displayName: PostgreSQL DB
+- type: SomePlugin
+  id: p-1
+  properties:
+    sqlDataSource:
+      ref: db-1
