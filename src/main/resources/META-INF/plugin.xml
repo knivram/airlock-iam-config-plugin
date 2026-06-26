@@ -1,6 +1,6 @@
 <!-- Plugin Configuration File. Read more: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
 <idea-plugin>
-    <id>com.github.knivram.airlockiamconfigplugin</id>
+    <id>me.knivram.IamPlugin</id>
     <name>Airlock IAM Config</name>
     <vendor>knivram</vendor>
     <description><![CDATA[
@@ -23,36 +23,36 @@
 
     <extensions defaultExtensionNs="com.intellij">
         <!-- Airlock IAM file icon for IamConfig files. -->
-        <iconProvider implementation="com.github.knivram.airlockiamconfigplugin.icon.AirlockIamIconProvider"/>
+        <iconProvider implementation="me.knivram.iamplugin.icon.AirlockIamIconProvider"/>
 
         <!-- Go to definition: ref:/parentRef: -> plugin id: (within the same file). -->
         <psi.referenceContributor language="yaml"
-                                  implementation="com.github.knivram.airlockiamconfigplugin.reference.RefReferenceContributor"/>
+                                  implementation="me.knivram.iamplugin.reference.RefReferenceContributor"/>
         <!-- Cmd/Ctrl+B on a plugin id value -> navigate to its usages. -->
-        <gotoDeclarationHandler implementation="com.github.knivram.airlockiamconfigplugin.navigation.IamConfigGotoDeclarationHandler"/>
+        <gotoDeclarationHandler implementation="me.knivram.iamplugin.navigation.IamConfigGotoDeclarationHandler"/>
 
         <!-- Find Usages: from a plugin id: -> all ref:/parentRef: pointing at it. -->
         <findUsagesHandlerFactory order="first"
-                                  implementation="com.github.knivram.airlockiamconfigplugin.usage.IamConfigFindUsagesHandlerFactory"/>
+                                  implementation="me.knivram.iamplugin.usage.IamConfigFindUsagesHandlerFactory"/>
         <!-- Offer the plugin as the find-usages target when the caret is on the id value itself. -->
-        <usageTargetProvider implementation="com.github.knivram.airlockiamconfigplugin.usage.IamConfigUsageTargetProvider"/>
+        <usageTargetProvider implementation="me.knivram.iamplugin.usage.IamConfigUsageTargetProvider"/>
 
         <!-- Completion of ref: values and type: values. order="first" so our providers run before the
              platform's YamlStructuralKeysCompletionContributor; result.stopHere() then suppresses its
              generic sibling-inferred keys (otherwise type/id/properties would be offered twice). -->
         <completion.contributor language="yaml" order="first"
-                                 implementationClass="com.github.knivram.airlockiamconfigplugin.completion.AirlockCompletionContributor"/>
+                                 implementationClass="me.knivram.iamplugin.completion.AirlockCompletionContributor"/>
 
         <!-- Quick Documentation / hover docs for type:, property keys, ids and refs. -->
         <lang.documentationProvider language="yaml"
-                                    implementationClass="com.github.knivram.airlockiamconfigplugin.documentation.AirlockDocumentationProvider"/>
+                                    implementationClass="me.knivram.iamplugin.documentation.AirlockDocumentationProvider"/>
 
         <!-- Labels ref:/parentRef: usages in the Find Usages tool window. -->
-        <usageTypeProvider implementation="com.github.knivram.airlockiamconfigplugin.usage.IamConfigUsageTypeProvider"/>
+        <usageTypeProvider implementation="me.knivram.iamplugin.usage.IamConfigUsageTypeProvider"/>
 
         <!-- Fold a ref:/parentRef: id to the resolved plugin's displayName (display-only; text stays the id). -->
         <lang.foldingBuilder language="yaml"
-                             implementationClass="com.github.knivram.airlockiamconfigplugin.folding.RefDisplayNameFoldingBuilder"/>
+                             implementationClass="me.knivram.iamplugin.folding.RefDisplayNameFoldingBuilder"/>
 
         <!-- Validation. -->
         <localInspection language="yaml"
@@ -61,41 +61,41 @@
                          groupKey="inspection.group.name"
                          enabledByDefault="true"
                          level="ERROR"
-                         implementationClass="com.github.knivram.airlockiamconfigplugin.inspection.DanglingReferenceInspection"/>
+                         implementationClass="me.knivram.iamplugin.inspection.DanglingReferenceInspection"/>
         <localInspection language="yaml"
                          shortName="AirlockDuplicateId"
                          key="inspection.duplicateId.displayName"
                          groupKey="inspection.group.name"
                          enabledByDefault="true"
                          level="WARNING"
-                         implementationClass="com.github.knivram.airlockiamconfigplugin.inspection.DuplicateIdInspection"/>
+                         implementationClass="me.knivram.iamplugin.inspection.DuplicateIdInspection"/>
         <localInspection language="yaml"
                          shortName="AirlockUnknownProperty"
                          key="inspection.unknownProperty.displayName"
                          groupKey="inspection.group.name"
                          enabledByDefault="true"
                          level="WEAK WARNING"
-                         implementationClass="com.github.knivram.airlockiamconfigplugin.inspection.UnknownPropertyInspection"/>
+                         implementationClass="me.knivram.iamplugin.inspection.UnknownPropertyInspection"/>
         <localInspection language="yaml"
                          shortName="AirlockWrongChildType"
                          key="inspection.wrongChildType.displayName"
                          groupKey="inspection.group.name"
                          enabledByDefault="true"
                          level="WEAK WARNING"
-                         implementationClass="com.github.knivram.airlockiamconfigplugin.inspection.WrongChildTypeInspection"/>
+                         implementationClass="me.knivram.iamplugin.inspection.WrongChildTypeInspection"/>
         <localInspection language="yaml"
                          shortName="AirlockMissingMandatoryProperty"
                          key="inspection.missingMandatory.displayName"
                          groupKey="inspection.group.name"
                          enabledByDefault="true"
                          level="ERROR"
-                         implementationClass="com.github.knivram.airlockiamconfigplugin.inspection.MissingMandatoryPropertyInspection"/>
+                         implementationClass="me.knivram.iamplugin.inspection.MissingMandatoryPropertyInspection"/>
         <localInspection language="yaml"
                          shortName="AirlockVariableEnv"
                          key="inspection.variableEnv.displayName"
                          groupKey="inspection.group.name"
                          enabledByDefault="true"
                          level="WARNING"
-                         implementationClass="com.github.knivram.airlockiamconfigplugin.inspection.VariableEnvInspection"/>
+                         implementationClass="me.knivram.iamplugin.inspection.VariableEnvInspection"/>
     </extensions>
 </idea-plugin>
