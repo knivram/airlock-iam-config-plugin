@@ -1,0 +1,21 @@
+<html>
+<body>
+Reports misconfigured configuration variables (<code>var:</code>) and environment/value entries in
+Airlock IAM config files.
+<p>
+    A property value can be a list of entries, each carrying exactly one value form
+    (<code>value</code>/<code>valueList</code>/<code>plugin</code>/<code>pluginList</code>/<code>pluginMap</code>)
+    plus optional <code>env</code>/<code>context</code> selectors and a <code>var</code> block
+    (<code>{name, sensitive}</code>). This inspection flags, within a single file:
+</p>
+<ul>
+    <li>a <code>var:</code> block without a <code>name</code>, or with keys other than <code>name</code>/<code>sensitive</code>, or a non-boolean <code>sensitive</code>;</li>
+    <li>two value entries that share the same environment/context (only one would ever apply);</li>
+    <li>a value entry with no value form, or with more than one;</li>
+    <li>an unexpected key inside a value entry.</li>
+</ul>
+<p>
+    A value list without a shared (env-less) default entry is legal and is not flagged.
+</p>
+</body>
+</html>

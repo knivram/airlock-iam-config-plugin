@@ -32,6 +32,12 @@ class UnknownPropertyInspection : LocalInspectionTool() {
             override fun visitElement(element: PsiElement) {
                 if (element !is YAMLKeyValue) return
                 if (element.keyText in IamConfigPsi.WRAPPER_KEYS) return
+                // Defensive: value-entry structural keys (value/valueList/plugin*/env/context/var) are
+                // never legitimate direct children of a `properties:` mapping, but if malformed YAML ever
+                // surfaces one here it is a structural key, not an unknown property — never flag it.
+                if (element.keyText in IamConfigPsi.VALUE_CARRIER_KEYS) return
+                if (element.keyText in IamConfigPsi.ENTRY_QUALIFIER_KEYS) return
+                if (element.keyText == IamConfigPsi.STORAGE_ID_KEY) return
                 if (!IamConfigPsi.isDirectChildOfProperties(element)) return
 
                 val propertiesKv = element.parentMapping?.parent as? YAMLKeyValue ?: return

@@ -35,8 +35,10 @@
         <!-- Offer the plugin as the find-usages target when the caret is on the id value itself. -->
         <usageTargetProvider implementation="com.github.knivram.airlockiamconfigplugin.usage.IamConfigUsageTargetProvider"/>
 
-        <!-- Completion of ref: values and type: values. -->
-        <completion.contributor language="yaml"
+        <!-- Completion of ref: values and type: values. order="first" so our providers run before the
+             platform's YamlStructuralKeysCompletionContributor; result.stopHere() then suppresses its
+             generic sibling-inferred keys (otherwise type/id/properties would be offered twice). -->
+        <completion.contributor language="yaml" order="first"
                                  implementationClass="com.github.knivram.airlockiamconfigplugin.completion.AirlockCompletionContributor"/>
 
         <!-- Quick Documentation / hover docs for type:, property keys, ids and refs. -->
@@ -82,5 +84,12 @@
                          enabledByDefault="false"
                          level="WARNING"
                          implementationClass="com.github.knivram.airlockiamconfigplugin.inspection.MissingMandatoryPropertyInspection"/>
+        <localInspection language="yaml"
+                         shortName="AirlockVariableEnv"
+                         key="inspection.variableEnv.displayName"
+                         groupKey="inspection.group.name"
+                         enabledByDefault="true"
+                         level="WARNING"
+                         implementationClass="com.github.knivram.airlockiamconfigplugin.inspection.VariableEnvInspection"/>
     </extensions>
 </idea-plugin>

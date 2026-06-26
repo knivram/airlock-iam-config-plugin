@@ -28,9 +28,11 @@ object IamConfigFileModel {
         val references: Map<String, List<YAMLScalar>>,
         /** Every `type:` value used in this file. */
         val types: Set<String>,
+        /** Every `env:` value used in this file, for env-name completion. */
+        val envNames: Set<String>,
     )
 
-    private val EMPTY = Model(emptyMap(), emptyList(), emptyMap(), emptySet())
+    private val EMPTY = Model(emptyMap(), emptyList(), emptyMap(), emptySet(), emptySet())
 
     fun of(file: YAMLFile): Model {
         if (!IamConfigPsi.isIamConfigFile(file)) return EMPTY
@@ -44,11 +46,15 @@ object IamConfigFileModel {
         val definitionInfos = ArrayList<IamConfigPsi.DefinitionInfo>()
         val references = HashMap<String, MutableList<YAMLScalar>>()
         val types = HashSet<String>()
+        val envNames = HashSet<String>()
 
         for (mapping in PsiTreeUtil.collectElementsOfType(file, YAMLMapping::class.java)) {
             val typeKv = mapping.getKeyValueByKey(IamConfigPsi.TYPE_KEY) ?: continue
             typeKv.valueText.takeIf { it.isNotBlank() }?.let(types::add)
             val idKv = mapping.getKeyValueByKey(IamConfigPsi.ID_KEY) ?: continue
+            // A `type:`+`id:` pair directly under a `properties:` mapping is a property-level id, not a
+            // plugin definition (matches IamConfigPsi.isPluginDefinitionId). Keep type harvesting above.
+            if (IamConfigPsi.isDirectChildOfProperties(idKv)) continue
             val id = idKv.valueText.takeIf { it.isNotBlank() } ?: continue
             definitions.getOrPut(id) { ArrayList() }.add(idKv)
             IamConfigPsi.definitionInfo(mapping)?.let(definitionInfos::add)
@@ -61,6 +67,15 @@ object IamConfigFileModel {
             }
         }
 
-        return Model(definitions, definitionInfos, references, types)
+        for (kv in PsiTreeUtil.collectElementsOfType(file, YAMLKeyValue::class.java)) {
+            if (kv.keyText != IamConfigPsi.ENV_KEY || kv.value !is YAMLScalar) continue
+            // Only genuine `env:` qualifiers (inside a value-entry) name an environment, never a scalar
+            // property literally named `env` on a custom type.
+            val entry = kv.parentMapping ?: continue
+            if (!IamConfigPsi.isValueEntry(entry)) continue
+            kv.valueText.takeIf { it.isNotBlank() }?.let(envNames::add)
+        }
+
+        return Model(definitions, definitionInfos, references, types, envNames)
     }
 }
