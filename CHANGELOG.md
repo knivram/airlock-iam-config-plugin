@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [0.0.1] - 2026-06-26
+
 ### Added
 
 - **Navigation** — go to definition from a `ref:` / `parentRef:` to the plugin `id:` it points at;
@@ -21,5 +23,5 @@
   and variable/environment misconfigurations.
 - A dedicated file icon for IamConfig files.
 
-All features are scoped to a single file, and validation applies only to plugin types known in the
-bundled catalog (custom/newer plugins are never flagged).
+[Unreleased]: https://github.com/knivram/airlock-iam-config-plugin/compare/0.0.1...HEAD
+[0.0.1]: https://github.com/knivram/airlock-iam-config-plugin/commits/0.0.1
