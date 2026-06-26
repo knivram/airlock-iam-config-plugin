@@ -48,6 +48,8 @@ data class CatalogProperty(
     val sensitive: Boolean,
     /** Type TOKENs assignable into this slot; empty unless the kind is plugin-valued. */
     val assignable: List<String>,
+    /** Render-ready sanitized HTML description from the IAM docs; null when absent. */
+    val description: String? = null,
 )
 
 /** One plugin type from the bundled Airlock IAM catalog. */
@@ -55,6 +57,8 @@ data class CatalogEntry(
     val type: String,
     val title: String?,
     val properties: List<CatalogProperty> = emptyList(),
+    /** Render-ready sanitized HTML description from the IAM docs; null when absent. */
+    val description: String? = null,
 ) {
     val propertiesByName: Map<String, CatalogProperty> by lazy { properties.associateBy { it.name } }
 }
@@ -119,11 +123,12 @@ class AirlockPluginCatalog {
         val type: String?,
         val title: String?,
         val properties: List<RawProperty>?,
+        val description: String?,
     ) {
         fun toEntry(): CatalogEntry? {
             val t = type?.takeIf(String::isNotBlank) ?: return null
             val props = properties.orEmpty().mapNotNull { it.toProperty() }
-            return CatalogEntry(t, title, props)
+            return CatalogEntry(t, title, props, description = description?.takeIf(String::isNotBlank))
         }
     }
 
@@ -133,6 +138,7 @@ class AirlockPluginCatalog {
         val mandatory: Boolean = false,
         val sensitive: Boolean = false,
         val assignableTypes: List<String>?,
+        val description: String?,
     ) {
         fun toProperty(): CatalogProperty? {
             val n = key?.takeIf(String::isNotBlank) ?: return null
@@ -142,6 +148,7 @@ class AirlockPluginCatalog {
                 mandatory = mandatory,
                 sensitive = sensitive,
                 assignable = assignableTypes.orEmpty(),
+                description = description?.takeIf(String::isNotBlank),
             )
         }
     }

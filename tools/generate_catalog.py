@@ -30,15 +30,22 @@ class is `AbortStepConfig` but the token is `AbortStep`). The YAML property key 
 `<code>` content inside `property-name`.
 
 This script extracts, per section: the type token, human-readable title, implementation
-class, and the list of properties. Each property records its yamlKey, its KIND tag
-(String/Boolean/.../Plugin-Link/Plugin-List/Plugin-Map), whether it is Mandatory, whether
-it is Sensitive, and -- for the plugin-valued kinds (Plugin-Link/List/Map) -- the list of
-assignable plugin *type tokens* (resolved from the assignable-plugin FQCN links through the
-catalog-wide class->type map; unresolved FQCNs are dropped).
+class, an optional plugin-level `description`, and the list of properties. Each property
+records its yamlKey, its KIND tag (String/Boolean/.../Plugin-Link/Plugin-List/Plugin-Map),
+whether it is Mandatory, whether it is Sensitive, an optional `description`, and -- for the
+plugin-valued kinds (Plugin-Link/List/Map) -- the list of assignable plugin *type tokens*
+(resolved from the assignable-plugin FQCN links through the catalog-wide class->type map;
+unresolved FQCNs are dropped).
 
-The result is a compact JSON array. Backward compatible with the previous (type/title/class
-only) format: the loader's `RawEntry` ignores unknown fields and the new `properties` field
-is simply absent in old files. If the serialized JSON exceeds ~1 MB it is written gzip'd as
+Both the plugin-level and per-property `description` are the docs' "Description" prose,
+SANITIZED at build time to the IntelliJ quick-doc HTML subset (keep p/br/code/pre/em/i/b/
+strong/ul/ol/li; turn `<a ...>text</a>` into its inner text; strip every other tag keeping
+inner text; collapse whitespace outside `<pre>`). Storing render-ready HTML keeps the
+runtime provider trivial and still compresses well.
+
+The result is a compact JSON array. Backward compatible with the previous format: the
+loader's `RawEntry`/`RawProperty` ignore unknown fields, and the `description` fields are
+simply absent when missing. If the serialized JSON exceeds ~1 MB it is written gzip'd as
 `<output>.gz` (and the plain `<output>` is removed) -- the plugin's loader tries `.gz` first.
 
 Provenance: the source HTML is the Airlock IAM plugin documentation for the pinned IAM
@@ -77,6 +84,70 @@ PROPERTY_NAME_CODE = re.compile(
 )
 PROPERTY_TAG = re.compile(r'<div class="property-tag">\s*(.*?)\s*</div>')
 ASSIGN_LINK = re.compile(r'<a class="plugin-link" href="#([^"]+)"')
+
+# Plugin-level description. The `value` never nests a <div> (verified), so a non-greedy
+# capture to the first </div> is safe.
+PLUGIN_DESC = re.compile(
+    r'<div class="plugin-description">\s*<div class="label">\s*Description\s*</div>\s*'
+    r'<div class="value">(.*?)</div>',
+    re.DOTALL,
+)
+
+# HTML sanitization for the IntelliJ quick-doc popup (build-time -> render-ready).
+ALLOWED_TAGS = {"p", "br", "code", "pre", "em", "i", "b", "strong", "ul", "ol", "li"}
+TAG_RE = re.compile(r"<(/?)([a-zA-Z][a-zA-Z0-9]*)\b[^>]*>")
+
+
+def sanitize_doc_html(raw: str) -> str:
+    """Reduce docs HTML to the IntelliJ quick-doc subset. <a>->inner text; unknown tags
+    stripped (inner text kept); allowed tags kept without attributes. Whitespace collapsed
+    outside <pre>. Returns '' for empty/whitespace-only input. Entities are left escaped
+    (do NOT html.unescape -- the swing HTML pane wants &lt;/&amp; intact)."""
+    if not raw or not raw.strip():
+        return ""
+    # 1) drop <a ...> and </a> markers entirely, keeping inner text (no cross-nav).
+    s = re.sub(r"</?a\b[^>]*>", "", raw)
+
+    # 2) rewrite each remaining tag: keep allowed as bare <tag>/</tag>; strip others.
+    def repl(m: re.Match) -> str:
+        closing, name = m.group(1), m.group(2).lower()
+        if name not in ALLOWED_TAGS:
+            return ""
+        if name == "br":
+            return "<br>"
+        return f"</{name}>" if closing else f"<{name}>"
+
+    s = TAG_RE.sub(repl, s)
+    # 2b) balance block tags: drop orphan closers, auto-close anything left open (LIFO).
+    bal: list[str] = []
+    stack: list[str] = []
+    pos = 0
+    for m in TAG_RE.finditer(s):
+        bal.append(s[pos:m.start()])
+        pos = m.end()
+        closing, name = m.group(1), m.group(2).lower()
+        if name == "br":
+            bal.append("<br>")
+            continue
+        if not closing:
+            stack.append(name)
+            bal.append(f"<{name}>")
+        elif stack and stack[-1] == name:
+            stack.pop()
+            bal.append(f"</{name}>")
+        # else: orphan close with no matching opener -> drop it
+    bal.append(s[pos:])
+    bal += [f"</{t}>" for t in reversed(stack)]
+    s = "".join(bal)
+    # 3) collapse whitespace outside <pre>...</pre>; preserve pre verbatim.
+    out: list[str] = []
+    i = 0
+    for m in re.finditer(r"<pre>.*?</pre>", s, re.DOTALL):
+        out.append(re.sub(r"\s+", " ", s[i:m.start()]))
+        out.append(m.group(0))  # verbatim
+        i = m.end()
+    out.append(re.sub(r"\s+", " ", s[i:]))
+    return "".join(out).strip()
 
 # Property KIND tags (exactly one per property). Order/spelling per the docs vocabulary.
 KIND_TAGS = {
@@ -162,6 +233,9 @@ def parse_properties(section: str) -> list[dict]:
             prop["mandatory"] = True
         if sensitive:
             prop["sensitive"] = True
+        desc = sanitize_doc_html(segments.get("Description", ""))
+        if desc:
+            prop["description"] = desc
         if kind in PLUGIN_VALUED_KINDS:
             assignable_html = segments.get("Assignable plugins", "")
             fqcns = ASSIGN_LINK.findall(assignable_html)
@@ -198,6 +272,10 @@ def parse(source: str) -> list[dict]:
         cls = meta.get("Class")
         if cls:
             entry["class"] = cls
+        dm = PLUGIN_DESC.search(part)
+        desc = sanitize_doc_html(dm.group(1)) if dm else ""
+        if desc:
+            entry["description"] = desc
         properties = parse_properties(part)
         total_props += len(properties)
         entry["properties"] = properties
@@ -347,6 +425,18 @@ def main() -> int:
         )
         return 1
 
+    plugin_desc = sum(1 for e in entries if e.get("description"))
+    prop_desc = sum(1 for e in entries for p in e["properties"] if p.get("description"))
+    MIN_PLUGIN_DESC, MIN_PROP_DESC = 1400, 6000  # measured ~1587 / ~7085
+    if plugin_desc < MIN_PLUGIN_DESC or prop_desc < MIN_PROP_DESC:
+        print(
+            f"ERROR: descriptions under-extracted (plugin={plugin_desc}, prop={prop_desc}; "
+            f"expected >= {MIN_PLUGIN_DESC}/{MIN_PROP_DESC}). The description markup likely "
+            "changed; update the parser.",
+            file=sys.stderr,
+        )
+        return 1
+
     payload = json.dumps(entries, indent=0, ensure_ascii=False) + "\n"
     size = len(payload.encode("utf-8"))
 
@@ -377,6 +467,8 @@ def main() -> int:
         print(f"  unresolved assignable FQCNs (sample {len(unresolved)}): {unresolved[:10]}")
     else:
         print("  all assignable FQCNs resolved to type tokens")
+
+    print(f"  descriptions: {plugin_desc} plugin-level, {prop_desc} per-property")
 
     # Cross-check against the example config (fails loudly on missing types).
     example = in_path  # placeholder; real path resolved below

@@ -54,6 +54,7 @@ object IamConfigPsi {
     /** True if [keyValue] is a plugin definition's `id` (an `id` whose mapping also has a `type`). */
     fun isPluginDefinitionId(keyValue: YAMLKeyValue): Boolean {
         if (keyValue.keyText != ID_KEY) return false
+        if (isDirectChildOfProperties(keyValue)) return false
         return keyValue.parentMapping?.getKeyValueByKey(TYPE_KEY) != null
     }
 

@@ -39,6 +39,10 @@
         <completion.contributor language="yaml"
                                  implementationClass="com.github.knivram.airlockiamconfigplugin.completion.AirlockCompletionContributor"/>
 
+        <!-- Quick Documentation / hover docs for type:, property keys, ids and refs. -->
+        <lang.documentationProvider language="yaml"
+                                    implementationClass="com.github.knivram.airlockiamconfigplugin.documentation.AirlockDocumentationProvider"/>
+
         <!-- Labels ref:/parentRef: usages in the Find Usages tool window. -->
         <usageTypeProvider implementation="com.github.knivram.airlockiamconfigplugin.usage.IamConfigUsageTypeProvider"/>
 
