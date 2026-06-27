@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Changed
+
+- Renamed the plugin to **Config Navigator** (formerly "Airlock IAM Config"); the plugin id is unchanged.
+
 ## [0.0.1] - 2026-06-26
 
 ### Added

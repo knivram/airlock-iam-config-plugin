@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Config Navigator — IntelliJ IDEA plugin for Airlock IAM configs</title>
+  <meta name="description" content="An IntelliJ IDEA plugin that adds navigation, completion, documentation and inspections to Airlock IAM configuration files. Install it from this custom plugin repository.">
+  <style>
+    :root {
+      --bg: #ffffff;
+      --fg: #1f2328;
+      --muted: #656d76;
+      --border: #d0d7de;
+      --subtle: #f6f8fa;
+      --accent: #008c8c;
+      --accent-fg: #ffffff;
+      --link: #006d6d;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0d1117;
+        --fg: #e6edf3;
+        --muted: #8b949e;
+        --border: #30363d;
+        --subtle: #161b22;
+        --accent: #00bfbf;
+        --accent-fg: #04201f;
+        --link: #2dd4d4;
+      }
+    }
+
+    * { box-sizing: border-box; }
+    html { -webkit-text-size-adjust: 100%; }
+
+    body {
+      margin: 0;
+      color: var(--fg);
+      background: var(--bg);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      line-height: 1.6;
+      font-size: 16px;
+    }
+
+    main {
+      max-width: 640px;
+      margin: 0 auto;
+      padding: clamp(48px, 12vw, 96px) 24px 64px;
+    }
+
+    h1 {
+      margin: 0 0 12px;
+      font-size: clamp(26px, 5vw, 34px);
+      line-height: 1.15;
+      letter-spacing: -.02em;
+    }
+
+    .lede {
+      margin: 0 0 40px;
+      color: var(--muted);
+      font-size: 17px;
+    }
+
+    h2 {
+      margin: 0 0 12px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--muted);
+    }
+
+    .url-row {
+      display: flex;
+      gap: 8px;
+      align-items: stretch;
+    }
+    .url {
+      flex: 1 1 auto;
+      min-width: 0;
+      margin: 0;
+      padding: 11px 14px;
+      background: var(--subtle);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+      font-size: 14px;
+      overflow-x: auto;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+    }
+    button.copy {
+      flex: 0 0 auto;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--fg);
+      border-radius: 8px;
+      padding: 0 16px;
+      font: inherit;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    button.copy:hover { border-color: var(--accent); color: var(--link); }
+    button.copy.copied { border-color: var(--accent); color: var(--link); }
+
+    .hint {
+      margin: 12px 0 0;
+      font-size: 14px;
+      color: var(--muted);
+    }
+    code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: .9em;
+      background: var(--subtle);
+      border: 1px solid var(--border);
+      padding: .5px 5px;
+      border-radius: 5px;
+    }
+
+    ul.features {
+      margin: 40px 0 0;
+      padding: 0 0 0 1.1em;
+      color: var(--fg);
+    }
+    ul.features li { margin: 0 0 8px; }
+    ul.features li::marker { color: var(--muted); }
+    ul.features b { font-weight: 600; }
+
+    .download {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 14px;
+      margin-top: 40px;
+    }
+    a.btn {
+      display: inline-block;
+      background: var(--accent);
+      color: var(--accent-fg);
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 15px;
+      padding: 10px 18px;
+      border-radius: 8px;
+    }
+    a.btn:hover { opacity: .9; }
+    .version { font-size: 14px; color: var(--muted); }
+    .version b { color: var(--fg); font-weight: 600; }
+
+    footer {
+      margin-top: 56px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    a { color: var(--link); }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Config Navigator</h1>
+    <p class="lede">
+      An IntelliJ&nbsp;IDEA plugin for Airlock&nbsp;IAM config files — the large
+      <code>IamConfig</code> YAML documents that are painful to read and edit by hand.
+    </p>
+
+    <h2>Add this plugin repository to IntelliJ</h2>
+    <div class="url-row">
+      <div class="url" id="repo-url">{{REPO_URL}}</div>
+      <button class="copy" id="copy-btn" type="button" aria-label="Copy repository URL">Copy</button>
+    </div>
+    <p class="hint">
+      In the IDE: <code>Settings → Plugins → ⚙ → Manage Plugin Repositories…</code>,
+      then paste the URL above. Requires IntelliJ IDEA 2025.2+.
+    </p>
+
+    <ul class="features">
+      <li><b>Navigation</b> — jump between <code>ref:</code>/<code>parentRef:</code> and the plugin <code>id:</code>, with Find Usages.</li>
+      <li><b>Code completion</b> — refs, slot-aware <code>type:</code> values, property names and scaffolds.</li>
+      <li><b>Quick documentation</b> — hover a type, property or ref for its description and allowed children.</li>
+      <li><b>Inspections</b> — dangling refs, duplicate ids, unknown/missing properties and wrong child types.</li>
+    </ul>
+
+    <div class="download">
+      <a class="btn" href="{{DOWNLOAD_URL}}">Download the plugin ZIP</a>
+      <span class="version">Latest version: <b>{{VERSION}}</b></span>
+    </div>
+
+    <footer>
+      <span>Config Navigator · v{{VERSION}}</span>
+      <a href="{{GITHUB_URL}}">View on GitHub →</a>
+    </footer>
+  </main>
+
+  <script>
+    (function () {
+      var btn = document.getElementById("copy-btn");
+      var url = document.getElementById("repo-url").textContent.trim();
+      var resetTimer;
+      btn.addEventListener("click", function () {
+        navigator.clipboard.writeText(url).then(function () {
+          btn.textContent = "Copied";
+          btn.classList.add("copied");
+          clearTimeout(resetTimer);
+          resetTimer = setTimeout(function () {
+            btn.textContent = "Copy";
+            btn.classList.remove("copied");
+          }, 1800);
+        });
+      });
+    })();
+  </script>
+</body>
+</html>

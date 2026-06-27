@@ -1,7 +1,7 @@
 <!-- Plugin Configuration File. Read more: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
 <idea-plugin>
     <id>me.knivram.IamPlugin</id>
-    <name>Airlock IAM Config</name>
+    <name>Config Navigator</name>
     <vendor>knivram</vendor>
     <description><![CDATA[
         <p>Editor support for <b>Airlock IAM</b> configuration files (<code>type: IamConfig</code>, <code>schemaVersion: iam.airlock.com/&hellip;</code>), powered by a bundled catalog of the IAM 8.6 plugin types &mdash; their properties, allowed child plugins and documentation.</p>

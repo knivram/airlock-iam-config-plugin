@@ -248,7 +248,7 @@ jobs:
             --title "v$VERSION" \
             --notes-file build/release-notes.md
 
-      - name: Generate updatePlugins.xml
+      - name: Generate updatePlugins.xml & landing page
         if: steps.gate.outputs.do_release == 'true'
         env:
           VERSION: ${{ steps.gate.outputs.version }}
@@ -259,18 +259,19 @@ jobs:
           cat > site/updatePlugins.xml <<XML
           <plugins>
             <plugin id="me.knivram.IamPlugin" url="${URL}" version="${VERSION}">
-              <name>Airlock IAM Config</name>
+              <name>Config Navigator</name>
               <idea-version since-build="252"/>
             </plugin>
           </plugins>
           XML
-          cat > site/index.html <<HTML
-          <!doctype html><meta charset="utf-8"><title>Airlock IAM Config — plugin repository</title>
-          <h1>Airlock IAM Config — IntelliJ plugin repository</h1>
-          <p>Add this URL under <em>Settings → Plugins → ⚙ → Manage Plugin Repositories</em>:</p>
-          <pre>https://${GITHUB_REPOSITORY_OWNER}.github.io/${GITHUB_REPOSITORY#*/}/updatePlugins.xml</pre>
-          <p>Latest version: ${VERSION} — <a href="${URL}">download the plugin ZIP</a>.</p>
-          HTML
+          # Render the landing page from the template, substituting the release-specific values.
+          REPO_URL="https://${GITHUB_REPOSITORY_OWNER}.github.io/${GITHUB_REPOSITORY#*/}/updatePlugins.xml"
+          GITHUB_URL="https://github.com/${GITHUB_REPOSITORY}"
+          sed -e "s|{{VERSION}}|${VERSION}|g" \
+              -e "s|{{DOWNLOAD_URL}}|${URL}|g" \
+              -e "s|{{REPO_URL}}|${REPO_URL}|g" \
+              -e "s|{{GITHUB_URL}}|${GITHUB_URL}|g" \
+              .github/pages/index.html > site/index.html
           echo "Generated updatePlugins.xml:"; cat site/updatePlugins.xml
 
       - name: Upload Pages artifact
