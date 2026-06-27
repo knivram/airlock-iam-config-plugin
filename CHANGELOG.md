@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [0.0.2] - 2026-06-27
+
 ### Changed
 
 - Renamed the plugin to **Config Navigator** (formerly "Airlock IAM Config"); the plugin id is unchanged.
@@ -27,5 +29,6 @@
   and variable/environment misconfigurations.
 - A dedicated file icon for IamConfig files.
 
-[Unreleased]: https://github.com/knivram/airlock-iam-config-plugin/compare/0.0.1...HEAD
+[Unreleased]: https://github.com/knivram/airlock-iam-config-plugin/compare/0.0.2...HEAD
+[0.0.2]: https://github.com/knivram/airlock-iam-config-plugin/compare/0.0.1...0.0.2
 [0.0.1]: https://github.com/knivram/airlock-iam-config-plugin/commits/0.0.1
