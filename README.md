@@ -30,6 +30,7 @@ painful to author and read by hand. This plugin makes them first-class:
   global default — a singleton configured in the global `GlobalConfiguration` settings tree, e.g. under
   `GlobalAuthenticationSettings` or `GlobalPersisterSettings` — is not flagged),
   and variable/environment misconfigurations.
+- **Intentions** — Alt+Enter on an empty plugin `id:` generates a fresh UUID.
 - A dedicated **file icon** for IamConfig files.
 
 Everything is scoped to a **single file**: configs are commonly duplicated (e.g. a production copy),

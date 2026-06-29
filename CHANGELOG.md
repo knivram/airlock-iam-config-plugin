@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- **Generate UUID** — Alt+Enter on an empty plugin `id:` fills it with a fresh UUID.
+
 ### Fixed
 
 - Missing-mandatory inspection no longer flags a Mandatory Plugin-Link that IAM auto-links from a global
