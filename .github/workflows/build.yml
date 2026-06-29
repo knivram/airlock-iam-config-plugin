@@ -230,7 +230,7 @@ jobs:
       # Reuse the exact artifact that build/test/verify already produced and verified.
       - name: Download built plugin
         if: steps.gate.outputs.do_release == 'true'
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: plugin-distribution
           path: dist
