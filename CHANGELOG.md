@@ -4,6 +4,11 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- Missing-mandatory inspection no longer flags a Mandatory Plugin-Link that IAM auto-links from a global
+  default (a singleton in the `GlobalConfiguration` settings tree).
+
 ## [0.0.2] - 2026-06-27
 
 ### Changed

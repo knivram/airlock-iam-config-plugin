@@ -26,7 +26,10 @@ painful to author and read by hand. This plugin makes them first-class:
   the plugin's description, its properties and the child plugins allowed in each slot.
 - **Folding** — a `ref:` id is displayed as the referenced plugin's display name; expand it for the id.
 - **Inspections** — dangling references, duplicate ids, unknown properties, wrong child plugin types,
-  missing mandatory properties (with an "add them" quick-fix), and variable/environment misconfigurations.
+  missing mandatory properties (with an "add them" quick-fix; a Mandatory Plugin-Link auto-linked from a
+  global default — a singleton configured in the global `GlobalConfiguration` settings tree, e.g. under
+  `GlobalAuthenticationSettings` or `GlobalPersisterSettings` — is not flagged),
+  and variable/environment misconfigurations.
 - A dedicated **file icon** for IamConfig files.
 
 Everything is scoped to a **single file**: configs are commonly duplicated (e.g. a production copy),

@@ -885,6 +885,173 @@ class InspectionTest : BasePlatformTestCase() {
         )
     }
 
+    fun testMissingMandatoryNotFlaggedWhenGlobalDefaultPresent() {
+        // Airlock2FAConsistencyUserChangeListener.airlock2FASettings is a Mandatory Plugin-Link to
+        // Airlock2FASettings. With an Airlock2FASettings configured globally (under GlobalConfiguration ->
+        // GlobalAuthenticationSettings), IAM auto-links it, so a bare type:+id: consumer is valid.
+        myFixture.enableInspections(MissingMandatoryPropertyInspection())
+        myFixture.configureByText(
+            "config.yaml",
+            """
+            schemaVersion: iam.airlock.com/v1.1
+            type: IamConfig
+            metadata: {}
+            spec:
+            - type: GlobalConfiguration
+              id: global-1
+              properties:
+                authenticationSettings:
+                  type: GlobalAuthenticationSettings
+                  id: gas-1
+                  properties:
+                    airlock2FASettings:
+                      type: Airlock2FASettings
+                      id: a2fa-1
+            - type: Airlock2FAConsistencyUserChangeListener
+              id: listener-1
+            """.trimIndent(),
+        )
+        // Scope to the consumer's type name: the global Airlock2FASettings' own unrelated mandatory props
+        // (repository/futuraeServer) are reported separately and must not confuse this assertion.
+        assertEmpty(
+            "an auto-linked global default must not be flagged as missing on the consumer",
+            myFixture.doHighlighting().byDescription("Airlock2FAConsistencyUserChangeListener"),
+        )
+    }
+
+    fun testMissingMandatoryFlaggedWhenNoGlobalDefault() {
+        // The same bare consumer, but with NO Airlock2FASettings anywhere: the exemption requires an
+        // actual global instance, so the mandatory airlock2FASettings is flagged.
+        myFixture.enableInspections(MissingMandatoryPropertyInspection())
+        myFixture.configureByText(
+            "config.yaml",
+            """
+            schemaVersion: iam.airlock.com/v1.1
+            type: IamConfig
+            metadata: {}
+            spec:
+            - type: Airlock2FAConsistencyUserChangeListener
+              id: listener-1
+            """.trimIndent(),
+        )
+        assertSize(1, myFixture.doHighlighting().byDescription("Airlock2FAConsistencyUserChangeListener"))
+    }
+
+    fun testMissingMandatoryGlobalDefaultExemptsOnlyThatProperty() {
+        // CrontoMessageProviderImpl has two mandatory props: messageTranslationKey (String) and
+        // crontoHandler (Plugin-Link -> CrontoEngineHandler/VascoCrontoHandler, both global defaults).
+        // With a CrontoEngineHandler configured globally and both omitted, ONLY messageTranslationKey is
+        // flagged (crontoHandler is auto-linked), and the quick-fix adds only it.
+        myFixture.enableInspections(MissingMandatoryPropertyInspection())
+        myFixture.configureByText(
+            "config.yaml",
+            """
+            schemaVersion: iam.airlock.com/v1.1
+            type: IamConfig
+            metadata: {}
+            spec:
+            - type: GlobalConfiguration
+              id: global-1
+              properties:
+                authenticationSettings:
+                  type: GlobalAuthenticationSettings
+                  id: gas-1
+                  properties:
+                    crontoSignSettings:
+                      type: CrontoEngineHandler
+                      id: cronto-1
+            - type: CrontoMessageProvider<caret>Impl
+              id: msg-1
+            """.trimIndent(),
+        )
+        val highlights = myFixture.doHighlighting().byDescription("CrontoMessageProviderImpl")
+        assertSize(1, highlights)
+        assertTrue(
+            "only the non-global-default messageTranslationKey must be flagged",
+            highlights.single().description!!.contains("messageTranslationKey"),
+        )
+        assertFalse(
+            "the auto-linked crontoHandler must not be flagged",
+            highlights.single().description!!.contains("crontoHandler"),
+        )
+        // The global CrontoEngineHandler also offers the same fix (its own tokenDataProvider is missing),
+        // so target the consumer's fix specifically via the caret rather than getAllQuickFixes().first().
+        val fix = myFixture.findSingleIntention("Add missing mandatory properties")
+        myFixture.launchAction(fix)
+        myFixture.checkResult(
+            """
+            schemaVersion: iam.airlock.com/v1.1
+            type: IamConfig
+            metadata: {}
+            spec:
+            - type: GlobalConfiguration
+              id: global-1
+              properties:
+                authenticationSettings:
+                  type: GlobalAuthenticationSettings
+                  id: gas-1
+                  properties:
+                    crontoSignSettings:
+                      type: CrontoEngineHandler
+                      id: cronto-1
+            - type: CrontoMessageProviderImpl
+              id: msg-1
+              properties:
+                messageTranslationKey:
+            """.trimIndent(),
+        )
+    }
+
+    fun testMissingMandatoryNotFlaggedWhenGlobalDataSourceDefaultPresent() {
+        // Global defaults are two levels deep: GlobalConfiguration -> dataSources (GlobalPersisterSettings,
+        // "Data sources") -> acceptedSsoTicketRepository: PersistentAcceptedSsoTicketRepository. A consumer
+        // (AcceptedSsoTicketsCleanupTask) whose Mandatory Plugin-Link acceptedSsoTicketRepository is omitted
+        // is auto-linked to that data-source default, so it must not be flagged.
+        myFixture.enableInspections(MissingMandatoryPropertyInspection())
+        myFixture.configureByText(
+            "config.yaml",
+            """
+            schemaVersion: iam.airlock.com/v1.1
+            type: IamConfig
+            metadata: {}
+            spec:
+            - type: GlobalConfiguration
+              id: global-1
+              properties:
+                dataSources:
+                  type: GlobalPersisterSettings
+                  id: gps-1
+                  properties:
+                    acceptedSsoTicketRepository:
+                      type: PersistentAcceptedSsoTicketRepository
+                      id: assr-1
+            - type: AcceptedSsoTicketsCleanupTask
+              id: task-1
+            """.trimIndent(),
+        )
+        assertEmpty(
+            "an auto-linked global data-source default must not be flagged on the consumer",
+            myFixture.doHighlighting().byDescription("AcceptedSsoTicketsCleanupTask"),
+        )
+    }
+
+    fun testMissingMandatoryFlaggedWhenGlobalDataSourceDefaultAbsent() {
+        // The same consumer with NO global data source present: the omission is genuinely missing.
+        myFixture.enableInspections(MissingMandatoryPropertyInspection())
+        myFixture.configureByText(
+            "config.yaml",
+            """
+            schemaVersion: iam.airlock.com/v1.1
+            type: IamConfig
+            metadata: {}
+            spec:
+            - type: AcceptedSsoTicketsCleanupTask
+              id: task-1
+            """.trimIndent(),
+        )
+        assertSize(1, myFixture.doHighlighting().byDescription("AcceptedSsoTicketsCleanupTask"))
+    }
+
     // ---- VariableEnv (variables & environments, Improvement #4) -------------------------------
 
     fun testVarMissingNameFlagged() {

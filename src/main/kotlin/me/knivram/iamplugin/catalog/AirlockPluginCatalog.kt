@@ -91,6 +91,35 @@ class AirlockPluginCatalog {
     fun assignableFor(type: String, propertyName: String): List<String> =
         property(type, propertyName)?.assignable ?: emptyList()
 
+    /**
+     * The plugin types configured ONCE in the global config and auto-linked by IAM wherever a consuming
+     * plugin declares a Mandatory Plugin-Link to that type but omits it.
+     *
+     * The global config is a two-level structure: `GlobalConfiguration` ("Main Settings") links a handful
+     * of *settings containers* — `GlobalAuthenticationSettings`, `GlobalPersisterSettings` ("Data sources"),
+     * `PasswordSettings`, the state repositories, `CorrelationIdSettings` — and the auto-linkable defaults
+     * are the plugin types occupying the single-Plugin-Link slots of those containers (one level below
+     * each). So this is the union of the `assignable` lists of the Plugin-Link properties of
+     * `GlobalConfiguration` and of every type it links directly.
+     *
+     * Stopping at this depth is deliberate: it captures e.g. the `GlobalPersisterSettings` data sources
+     * (`DatabaseUserStoreProvider`, `PersistentAcceptedSsoTicketRepository`, `DefaultTokenDataProvider`, …)
+     * while keeping deeper infrastructure leaves out — a `JdbcConnectionPool` that is merely some default's
+     * `sqlDataSource` must NOT be mistaken for an auto-linkable global default. An absent entry contributes
+     * nothing (the safe fallback, meaning "no suppression").
+     */
+    val globalDefaultTypes: Set<String> by lazy {
+        val containers = buildSet {
+            add(GLOBAL_CONFIG_TYPE)
+            addAll(linkAssignables(GLOBAL_CONFIG_TYPE))
+        }
+        containers.flatMap(::linkAssignables).toSet()
+    }
+
+    /** Types assignable into the single-Plugin-Link slots of [type] (empty for unknown/leaf types). */
+    private fun linkAssignables(type: String): List<String> =
+        propertiesOf(type).filter { it.kind == PropertyKind.PLUGIN_LINK }.flatMap { it.assignable }
+
     private fun load(): List<CatalogEntry> {
         val raw = openCatalogStream(javaClass.classLoader)
         if (raw == null) {
@@ -155,6 +184,12 @@ class AirlockPluginCatalog {
 
     companion object {
         private const val RESOURCE = "airlock/iam-8.6-plugins.json"
+
+        /**
+         * Root of the global-config settings tree. Kept as a literal here (rather than reusing the psi
+         * module's `IamConfigPsi.GLOBAL_CONFIG_TYPE`) so the catalog stays free of a psi dependency.
+         */
+        private const val GLOBAL_CONFIG_TYPE = "GlobalConfiguration"
 
         fun getInstance(): AirlockPluginCatalog = service()
     }

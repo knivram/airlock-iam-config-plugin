@@ -57,4 +57,26 @@ class AirlockPluginCatalogTest : BasePlatformTestCase() {
         assertNotNull(svc)
         assertTrue(svc!!.mandatory)
     }
+
+    fun testGlobalDefaultTypes() {
+        // The global-default types IAM auto-links into consumers, derived from the two-level settings tree.
+        val globalDefaults = catalog.globalDefaultTypes
+        assertFalse("the real catalog must expose global-default types", globalDefaults.isEmpty())
+        // Level-1 containers' settings (GlobalAuthenticationSettings children).
+        assertContainsElements(globalDefaults, "Airlock2FASettings", "FidoSettings", "MtanSettings")
+        // Level-2 must also reach the GlobalPersisterSettings ("Data sources") defaults.
+        assertContainsElements(
+            globalDefaults,
+            "DatabaseUserStoreProvider",
+            "PersistentAcceptedSsoTicketRepository",
+            "DefaultTokenDataProvider",
+            "UserTrailLogRepository",
+        )
+        // ...but must stop before deep infrastructure leaves: a JdbcConnectionPool that is merely some
+        // default's sqlDataSource is NOT an auto-linkable global default.
+        assertFalse(
+            "deep infrastructure leaves must not be treated as global defaults",
+            globalDefaults.contains("JdbcConnectionPool"),
+        )
+    }
 }

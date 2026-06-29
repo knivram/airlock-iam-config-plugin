@@ -2,6 +2,9 @@ package me.knivram.iamplugin.inspection
 
 import me.knivram.iamplugin.AirlockBundle
 import me.knivram.iamplugin.catalog.AirlockPluginCatalog
+import me.knivram.iamplugin.catalog.CatalogProperty
+import me.knivram.iamplugin.catalog.PropertyKind
+import me.knivram.iamplugin.psi.IamConfigFileModel
 import me.knivram.iamplugin.psi.IamConfigPsi
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ProblemHighlightType
@@ -29,6 +32,13 @@ import org.jetbrains.yaml.psi.YAMLMapping
  * required given some other setting). The catalog flag is taken from the docs, so a few props that are
  * only conditionally required are still reported; this stricter behaviour is intentional.
  *
+ * Conversely, an omitted Mandatory Plugin-Link is NOT flagged when its assignable type is configured as
+ * a global default (a definition nested under `GlobalConfiguration`/`GlobalAuthenticationSettings`):
+ * IAM auto-links the single global instance into such a slot, so omitting it is valid. The match is by
+ * assignable TYPE (not property name), applies only to single Plugin-Link slots, and fires per-property
+ * only when a global instance actually exists in the file — other genuinely-missing mandatory props on
+ * the same plugin are still reported.
+ *
  * Scoped to KNOWN types; the present keys are read from the plugin's own `properties:` mapping.
  */
 class MissingMandatoryPropertyInspection : LocalInspectionTool() {
@@ -37,6 +47,7 @@ class MissingMandatoryPropertyInspection : LocalInspectionTool() {
         val file = holder.file as? YAMLFile ?: return PsiElementVisitor.EMPTY_VISITOR
         if (!IamConfigPsi.isIamConfigFile(file)) return PsiElementVisitor.EMPTY_VISITOR
         val catalog = AirlockPluginCatalog.getInstance()
+        val model = IamConfigFileModel.of(file)
 
         return object : PsiElementVisitor() {
             override fun visitElement(element: PsiElement) {
@@ -61,7 +72,12 @@ class MissingMandatoryPropertyInspection : LocalInspectionTool() {
                     ?.toSet()
                     ?: emptySet()
 
-                val missing = mandatory.map { it.name }.filter { it !in present }
+                // A mandatory property is missing unless present, OR exempt: an omitted Mandatory
+                // Plugin-Link whose assignable type is configured as a global default (under
+                // GlobalConfiguration/GlobalAuthenticationSettings) is auto-linked by IAM, not missing.
+                val missing = mandatory
+                    .filter { it.name !in present && !isGlobalDefaultExempt(it) }
+                    .map { it.name }
                 if (missing.isEmpty()) return
 
                 // Highlight just the type VALUE element (like Kotlin underlines the class name when
@@ -81,6 +97,15 @@ class MissingMandatoryPropertyInspection : LocalInspectionTool() {
                     AddMissingMandatoryPropertiesFix(missing),
                 )
             }
+
+            /**
+             * True if [prop] is a single Plugin-Link to a type IAM auto-links from a global default: the
+             * kind is Plugin-Link and at least one assignable type is both a catalog global-default type
+             * and actually present as a global-scope definition in this file. Keyed by assignable TYPE.
+             */
+            private fun isGlobalDefaultExempt(prop: CatalogProperty): Boolean =
+                prop.kind == PropertyKind.PLUGIN_LINK &&
+                    prop.assignable.any { it in catalog.globalDefaultTypes && it in model.globalDefaults }
         }
     }
 }

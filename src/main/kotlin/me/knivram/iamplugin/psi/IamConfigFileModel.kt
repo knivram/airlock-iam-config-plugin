@@ -31,9 +31,11 @@ object IamConfigFileModel {
         val types: Set<String>,
         /** Every `env:` value used in this file, for env-name completion. */
         val envNames: Set<String>,
+        /** Plugin TYPE -> its global-scope definition (first wins); the auto-linked global defaults. */
+        val globalDefaults: Map<String, IamConfigPsi.DefinitionInfo> = emptyMap(),
     )
 
-    private val EMPTY = Model(emptyMap(), emptyList(), emptyMap(), emptySet(), emptySet())
+    private val EMPTY = Model(emptyMap(), emptyList(), emptyMap(), emptySet(), emptySet(), emptyMap())
 
     fun of(file: YAMLFile): Model {
         if (!IamConfigPsi.isIamConfigFile(file)) return EMPTY
@@ -53,6 +55,7 @@ object IamConfigFileModel {
         val references = HashMap<String, MutableList<YAMLScalar>>()
         val types = HashSet<String>()
         val envNames = HashSet<String>()
+        val globalDefaults = HashMap<String, IamConfigPsi.DefinitionInfo>()
 
         for (mapping in PsiTreeUtil.collectElementsOfType(file, YAMLMapping::class.java)) {
             val typeKv = mapping.getKeyValueByKey(IamConfigPsi.TYPE_KEY) ?: continue
@@ -63,7 +66,11 @@ object IamConfigFileModel {
             if (IamConfigPsi.isDirectChildOfProperties(idKv)) continue
             val id = idKv.valueText.takeIf { it.isNotBlank() } ?: continue
             definitions.getOrPut(id) { ArrayList() }.add(idKv)
-            IamConfigPsi.definitionInfo(mapping)?.let(definitionInfos::add)
+            val info = IamConfigPsi.definitionInfo(mapping) ?: continue
+            definitionInfos.add(info)
+            // A definition nested under GlobalConfiguration/GlobalAuthenticationSettings is a global
+            // default IAM auto-links into consumers' Mandatory Plugin-Links; index it by type (first wins).
+            if (IamConfigPsi.isInGlobalScope(mapping)) globalDefaults.putIfAbsent(info.type, info)
         }
 
         for (scalar in PsiTreeUtil.collectElementsOfType(file, YAMLScalar::class.java)) {
@@ -82,6 +89,6 @@ object IamConfigFileModel {
             kv.valueText.takeIf { it.isNotBlank() }?.let(envNames::add)
         }
 
-        return Model(definitions, definitionInfos, references, types, envNames)
+        return Model(definitions, definitionInfos, references, types, envNames, globalDefaults)
     }
 }

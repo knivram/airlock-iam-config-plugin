@@ -1,6 +1,7 @@
 package me.knivram.iamplugin.psi
 
 import com.intellij.psi.PsiElement
+import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.yaml.psi.YAMLFile
 import org.jetbrains.yaml.psi.YAMLKeyValue
 import org.jetbrains.yaml.psi.YAMLMapping
@@ -32,6 +33,10 @@ object IamConfigPsi {
     const val PARENT_REF_KEY: String = "parentRef"
     const val REF_KEY: String = "ref"
     const val SPEC_KEY: String = "spec"
+
+    /** The two plugin types whose single global instance IAM auto-links into Mandatory Plugin-Links. */
+    const val GLOBAL_CONFIG_TYPE: String = "GlobalConfiguration"
+    const val GLOBAL_AUTH_SETTINGS_TYPE: String = "GlobalAuthenticationSettings"
 
     /** Sequence/value wrapper keys that sit between a property and the child plugin mapping. */
     val WRAPPER_KEYS: Set<String> = setOf("pluginList", "plugin", "pluginMap")
@@ -106,6 +111,21 @@ object IamConfigPsi {
     }
 
     data class DefinitionInfo(val id: String, val type: String, val displayName: String?)
+
+    /**
+     * True if [mapping] is nested somewhere inside the global config, i.e. some ANCESTOR plugin mapping
+     * (strictly above [mapping]; the mapping itself is excluded) has `type:` [GLOBAL_CONFIG_TYPE] or
+     * [GLOBAL_AUTH_SETTINGS_TYPE]. Climbs the enclosing-mapping chain, mirroring [enclosingPropertyKeyValue].
+     */
+    fun isInGlobalScope(mapping: YAMLMapping): Boolean {
+        var ancestor = PsiTreeUtil.getParentOfType(mapping, YAMLMapping::class.java)
+        while (ancestor != null) {
+            val type = ancestor.getKeyValueByKey(TYPE_KEY)?.valueText
+            if (type == GLOBAL_CONFIG_TYPE || type == GLOBAL_AUTH_SETTINGS_TYPE) return true
+            ancestor = PsiTreeUtil.getParentOfType(ancestor, YAMLMapping::class.java)
+        }
+        return false
+    }
 
     /** The (parentType, propertyName) a child plugin mapping occupies inside a parent's `properties:`. */
     data class Slot(val parentType: String, val propertyName: String)
