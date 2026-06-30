@@ -7,6 +7,12 @@
 ### Added
 
 - **Generate UUID** — Alt+Enter on an empty plugin `id:` fills it with a fresh UUID.
+- **Snippet support** — `type: IamSnippet` documents now get the full feature set (navigation, completion,
+  inspections, folding, quick documentation and the file icon), the same as `type: IamConfig` files.
+- **Gutter icons** — line markers jump between a plugin `id:` definition and its `ref:` / `parentRef:`
+  usages, in both directions.
+- **Inspection** — a sensitive plugin property holding a plain-text value is flagged (use a configuration
+  variable `var`, an external secret `storageId`, a `[FILE]` reference or an `[OBFUSCATED]` value instead).
 
 ### Fixed
 

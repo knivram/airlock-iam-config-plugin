@@ -19,6 +19,9 @@ import org.jetbrains.yaml.psi.YAMLSequenceItem
  *  - Ids are matched by *value*, never by UUID shape: hand-authored ids may be plain words
  *    (e.g. `register-mtan`). A property named `id` that is NOT a sibling of `type:`
  *    (e.g. `properties.id: register-mtan`) is deliberately not a definition.
+ *
+ * Both full configs (`type: IamConfig`) and snippet documents (`type: IamSnippet`) are recognised:
+ * they share the same `schemaVersion` and the same `spec:` of plugin definitions.
  */
 object IamConfigPsi {
 
@@ -68,15 +71,20 @@ object IamConfigPsi {
     const val VAR_SENSITIVE_KEY: String = "sensitive"
     val VAR_KEYS: Set<String> = setOf(VAR_NAME_KEY, VAR_SENSITIVE_KEY)
 
-    private const val ROOT_TYPE = "IamConfig"
+    /** Root document types treated as an IAM config: full configs and snippet documents alike. */
+    private val ROOT_TYPES = setOf("IamConfig", "IamSnippet")
     private const val SCHEMA_KEY = "schemaVersion"
     private const val SCHEMA_PREFIX = "iam.airlock.com"
 
-    /** True if [file] is an Airlock IAM config (`type: IamConfig` + `schemaVersion: iam.airlock.com…`). */
+    /**
+     * True if [file] is an Airlock IAM config: a `type:` of `IamConfig` or `IamSnippet` plus a
+     * `schemaVersion: iam.airlock.com…`. Snippets share the same schema and `spec:` shape as full
+     * configs, so they get the full feature set.
+     */
     fun isIamConfigFile(file: YAMLFile): Boolean {
         val root = file.documents.firstOrNull()?.topLevelValue as? YAMLMapping ?: return false
         val type = root.getKeyValueByKey(TYPE_KEY)?.valueText
-        if (type != ROOT_TYPE) return false
+        if (type !in ROOT_TYPES) return false
         val schema = root.getKeyValueByKey(SCHEMA_KEY)?.valueText ?: return false
         return schema.startsWith(SCHEMA_PREFIX)
     }

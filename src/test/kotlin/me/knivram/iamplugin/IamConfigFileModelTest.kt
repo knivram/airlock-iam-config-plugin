@@ -98,6 +98,31 @@ class IamConfigFileModelTest : BasePlatformTestCase() {
         )
     }
 
+    fun testModelPopulatesForIamSnippetFile() {
+        // A `type: IamSnippet` document shares the schema and spec shape of a full config, so the model
+        // must index its definitions and references just like an IamConfig file.
+        val file = myFixture.configureByText(
+            "snippet.yaml",
+            """
+            schemaVersion: iam.airlock.com/v1.1
+            type: IamSnippet
+            metadata: {}
+            spec:
+            - type: JdbcConnectionPool
+              id: db-1
+            - type: Consumer
+              id: consumer-1
+              properties:
+                policy:
+                  ref: db-1
+            """.trimIndent(),
+        ) as YAMLFile
+        val model = IamConfigFileModel.of(file)
+        assertTrue("a snippet's definitions must be indexed", model.definitions.containsKey("db-1"))
+        assertNotNull("a snippet's references must be indexed", model.references["db-1"])
+        assertSize(1, model.references["db-1"]!!)
+    }
+
     fun testModelIsEmptyForNonIamConfigFile() {
         val file = myFixture.configureByText(
             "plain.yaml",

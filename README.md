@@ -4,8 +4,8 @@
 
 <!-- Plugin description -->
 Editor support for **Airlock IAM** configuration files — the large YAML documents with
-`type: IamConfig` and `schemaVersion: iam.airlock.com/…`. Backed by a bundled catalog of the
-IAM 8.6 plugin types: their properties, the child plugins allowed in each slot, and documentation.
+`type: IamConfig` (or `type: IamSnippet`) and `schemaVersion: iam.airlock.com/…`. Backed by a bundled
+catalog of the IAM 8.6 plugin types: their properties, the child plugins allowed in each slot, and documentation.
 
 These configs are trees of *plugins*. A plugin is a YAML mapping with a `type:` and an `id:`;
 instead of inlining a plugin, another place can reference it by `ref:` (or inherit via `parentRef:`)
@@ -13,7 +13,8 @@ using that `id`. Because ids are opaque (usually UUIDs) and the schema is large,
 painful to author and read by hand. This plugin makes them first-class:
 
 - **Navigation** — Ctrl/Cmd+Click a `ref:` / `parentRef:` to jump to the plugin `id:` it points at;
-  from an `id:`, Find Usages (or Ctrl/Cmd+B) lists every reference.
+  from an `id:`, Find Usages (or Ctrl/Cmd+B) lists every reference. Gutter icons mark each `id:`
+  definition and its usages, navigable in both directions.
 - **Code completion**
   - `ref:` / `parentRef:` values — pick an existing plugin (shown by its `displayName` and type,
     matched **case-insensitively**); the id is inserted for you.
@@ -29,15 +30,15 @@ painful to author and read by hand. This plugin makes them first-class:
   missing mandatory properties (with an "add them" quick-fix; a Mandatory Plugin-Link auto-linked from a
   global default — a singleton configured in the global `GlobalConfiguration` settings tree, e.g. under
   `GlobalAuthenticationSettings` or `GlobalPersisterSettings` — is not flagged),
-  and variable/environment misconfigurations.
+  plain-text values in sensitive properties, and variable/environment misconfigurations.
 - **Intentions** — Alt+Enter on an empty plugin `id:` generates a fresh UUID.
-- A dedicated **file icon** for IamConfig files.
+- A dedicated **file icon** for IamConfig and IamSnippet files.
 
 Everything is scoped to a **single file**: configs are commonly duplicated (e.g. a production copy),
 where the same ids legitimately appear in several files — so resolving, finding usages and validating
 across files would produce false duplicate-id warnings and ambiguous navigation. Validation only
 applies to plugin types known in the bundled catalog, so custom/newer plugins are never flagged.
-Ordinary YAML (non-IamConfig) is untouched.
+Ordinary YAML (neither IamConfig nor IamSnippet) is untouched.
 <!-- Plugin description end -->
 
 ## Requirements

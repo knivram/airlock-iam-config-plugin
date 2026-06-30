@@ -84,6 +84,34 @@ class InspectionTest : BasePlatformTestCase() {
         assertEmpty(myFixture.doHighlighting().byDescription("whatever-9999"))
     }
 
+    fun testDanglingReferenceFlaggedInIamSnippetFile() {
+        // A `type: IamSnippet` document is a recognised IAM config and must get the full feature set:
+        // a dangling ref inside it is flagged exactly as in an IamConfig file.
+        myFixture.enableInspections(DanglingReferenceInspection())
+        myFixture.configureByText(
+            "snippet.yaml",
+            """
+            schemaVersion: iam.airlock.com/v1.1
+            type: IamSnippet
+            metadata: {}
+            spec:
+            - type: JdbcConnectionPool
+              id: good-id-0000
+              displayName: DB
+            - type: Consumer
+              id: consumer-1
+              properties:
+                ok:
+                  ref: good-id-0000
+                broken:
+                  ref: missing-id-9999
+            """.trimIndent(),
+        )
+        val highlights = myFixture.doHighlighting()
+        assertSize(1, highlights.byDescription("missing-id-9999"))
+        assertEmpty(highlights.byDescription("good-id-0000"))
+    }
+
     fun testDuplicateIdWithinFileFlagged() {
         myFixture.enableInspections(DuplicateIdInspection())
         myFixture.configureByText(

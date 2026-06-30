@@ -4,15 +4,15 @@
     <name>Config Navigator</name>
     <vendor>knivram</vendor>
     <description><![CDATA[
-        <p>Editor support for <b>Airlock IAM</b> configuration files (<code>type: IamConfig</code>, <code>schemaVersion: iam.airlock.com/&hellip;</code>), powered by a bundled catalog of the IAM 8.6 plugin types &mdash; their properties, allowed child plugins and documentation.</p>
+        <p>Editor support for <b>Airlock IAM</b> configuration files (<code>type: IamConfig</code> or <code>type: IamSnippet</code>, <code>schemaVersion: iam.airlock.com/&hellip;</code>), powered by a bundled catalog of the IAM 8.6 plugin types &mdash; their properties, allowed child plugins and documentation.</p>
         <ul>
-            <li><b>Navigation</b> &mdash; jump from a <code>ref:</code>/<code>parentRef:</code> to the plugin <code>id:</code> it points at; from an <code>id:</code>, Find Usages (or Ctrl/Cmd+B) lists everything that references it.</li>
+            <li><b>Navigation</b> &mdash; jump from a <code>ref:</code>/<code>parentRef:</code> to the plugin <code>id:</code> it points at; from an <code>id:</code>, Find Usages (or Ctrl/Cmd+B) lists everything that references it; gutter icons link a definition and its usages both ways.</li>
             <li><b>Code completion</b> &mdash; <code>ref:</code> values (existing plugins, shown by display name, matched case-insensitively); <code>type:</code> values (constrained to the plugins valid for the surrounding slot, else the full catalog); plugin <b>property names</b>; plugin-definition keys (<code>type</code>/<code>id</code>/<code>displayName</code>/<code>comment</code>/<code>parentRef</code>/<code>properties</code>); <code>pluginList</code>/<code>pluginMap</code> scaffolds; and <code>env:</code>/<code>var:</code> for environment-specific values.</li>
             <li><b>Quick documentation</b> &mdash; hover (or Ctrl-Q) a <code>type:</code>, a property key, or a <code>ref:</code>/<code>id:</code> to see the plugin's description, properties and allowed child types.</li>
             <li><b>Folding</b> &mdash; a <code>ref:</code> id is shown as the referenced plugin's display name; expand it to see the id.</li>
-            <li><b>Inspections</b> &mdash; dangling references, duplicate ids, unknown properties, wrong child plugin types, missing mandatory properties (with a quick-fix that adds them; a Mandatory Plugin-Link auto-linked from a global default &mdash; a singleton configured in the global <code>GlobalConfiguration</code> settings tree, e.g. under <code>GlobalAuthenticationSettings</code> or <code>GlobalPersisterSettings</code> &mdash; is not flagged), and variable/environment misconfigurations.</li>
+            <li><b>Inspections</b> &mdash; dangling references, duplicate ids, unknown properties, wrong child plugin types, missing mandatory properties (with a quick-fix that adds them; a Mandatory Plugin-Link auto-linked from a global default &mdash; a singleton configured in the global <code>GlobalConfiguration</code> settings tree, e.g. under <code>GlobalAuthenticationSettings</code> or <code>GlobalPersisterSettings</code> &mdash; is not flagged), plain-text values in sensitive properties, and variable/environment misconfigurations.</li>
             <li><b>Intentions</b> &mdash; Alt+Enter on an empty plugin <code>id:</code> generates a fresh UUID.</li>
-            <li>A dedicated <b>file icon</b> for IamConfig files.</li>
+            <li>A dedicated <b>file icon</b> for IamConfig and IamSnippet files.</li>
         </ul>
         <p>Everything is scoped to a single file (so duplicating a config &mdash; e.g. a production copy &mdash; does not cause false duplicate-id warnings), and validation only applies to plugin types known in the bundled catalog, so custom plugins are never flagged.</p>
     ]]></description>
@@ -31,6 +31,9 @@
                                   implementation="me.knivram.iamplugin.reference.RefReferenceContributor"/>
         <!-- Cmd/Ctrl+B on a plugin id value -> navigate to its usages. -->
         <gotoDeclarationHandler implementation="me.knivram.iamplugin.navigation.IamConfigGotoDeclarationHandler"/>
+        <!-- Gutter icons linking a plugin id: definition and its ref:/parentRef: usages (both directions). -->
+        <codeInsight.lineMarkerProvider language="yaml"
+                                        implementationClass="me.knivram.iamplugin.navigation.IamConfigLineMarkerProvider"/>
 
         <!-- Find Usages: from a plugin id: -> all ref:/parentRef: pointing at it. -->
         <findUsagesHandlerFactory order="first"
@@ -98,6 +101,13 @@
                          enabledByDefault="true"
                          level="ERROR"
                          implementationClass="me.knivram.iamplugin.inspection.MissingMandatoryPropertyInspection"/>
+        <localInspection language="yaml"
+                         shortName="AirlockPlaintextSecret"
+                         key="inspection.plaintextSecret.displayName"
+                         groupKey="inspection.group.name"
+                         enabledByDefault="true"
+                         level="WEAK WARNING"
+                         implementationClass="me.knivram.iamplugin.inspection.PlaintextSecretInspection"/>
         <localInspection language="yaml"
                          shortName="AirlockVariableEnv"
                          key="inspection.variableEnv.displayName"
