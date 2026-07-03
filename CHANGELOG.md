@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [0.0.3] - 2026-07-03
+
 ### Added
 
 - **Generate UUID** — Alt+Enter on an empty plugin `id:` fills it with a fresh UUID.
@@ -44,6 +46,7 @@
   and variable/environment misconfigurations.
 - A dedicated file icon for IamConfig files.
 
-[Unreleased]: https://github.com/knivram/airlock-iam-config-plugin/compare/0.0.2...HEAD
-[0.0.2]: https://github.com/knivram/airlock-iam-config-plugin/compare/0.0.1...0.0.2
-[0.0.1]: https://github.com/knivram/airlock-iam-config-plugin/commits/0.0.1
+[Unreleased]: https://github.com/knivram/airlock-iam-config-plugin/compare/v0.0.3...HEAD
+[0.0.3]: https://github.com/knivram/airlock-iam-config-plugin/compare/v0.0.2...v0.0.3
+[0.0.2]: https://github.com/knivram/airlock-iam-config-plugin/compare/v0.0.1...v0.0.2
+[0.0.1]: https://github.com/knivram/airlock-iam-config-plugin/commits/v0.0.1
