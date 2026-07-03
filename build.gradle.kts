@@ -31,6 +31,10 @@ intellijPlatform {
         // version (falling back to the Unreleased section) as HTML. Keeps the marketplace / IDE "What's new"
         // in sync with the changelog without hand-maintaining a second copy. `description` stays hand-authored
         // in plugin.xml and is intentionally left unset here.
+        //
+        // `changelog` is captured into a local val so the provider closes over the extension, NOT the Project:
+        // the configuration cache cannot serialize a Project reference for the patchPluginXml task.
+        val changelog = project.changelog
         changeNotes = providers.gradleProperty("version").map { version ->
             with(changelog) {
                 renderItem(
