@@ -75,6 +75,8 @@ object IamConfigPsi {
     private val ROOT_TYPES = setOf("IamConfig", "IamSnippet")
     private const val SCHEMA_KEY = "schemaVersion"
     private const val SCHEMA_PREFIX = "iam.airlock.com"
+    const val METADATA_KEY: String = "metadata"
+    const val IAM_VERSION_KEY: String = "iamVersion"
 
     /**
      * True if [file] is an Airlock IAM config: a `type:` of `IamConfig` or `IamSnippet` plus a
@@ -87,6 +89,17 @@ object IamConfigPsi {
         if (type !in ROOT_TYPES) return false
         val schema = root.getKeyValueByKey(SCHEMA_KEY)?.valueText ?: return false
         return schema.startsWith(SCHEMA_PREFIX)
+    }
+
+    /**
+     * The `metadata.iamVersion` declared by [file] (the IAM product version the config is valid
+     * for, machine-written by IAM exports), or null when absent/blank. Snippets commonly carry an
+     * empty `metadata: {}`. Raw text — parsing/normalisation is the catalog's job.
+     */
+    fun declaredIamVersion(file: YAMLFile): String? {
+        val root = file.documents.firstOrNull()?.topLevelValue as? YAMLMapping ?: return null
+        val metadata = root.getKeyValueByKey(METADATA_KEY)?.value as? YAMLMapping ?: return null
+        return metadata.getKeyValueByKey(IAM_VERSION_KEY)?.valueText?.trim()?.takeIf { it.isNotBlank() }
     }
 
     /** True if [scalar] is the value of a `ref:`/`parentRef:` key. */

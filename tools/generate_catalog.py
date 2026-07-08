@@ -48,12 +48,30 @@ loader's `RawEntry`/`RawProperty` ignore unknown fields, and the `description` f
 simply absent when missing. If the serialized JSON exceeds ~1 MB it is written gzip'd as
 `<output>.gz` (and the plain `<output>` is removed) -- the plugin's loader tries `.gz` first.
 
-Provenance: the source HTML is the Airlock IAM plugin documentation for the pinned IAM
-version (see metadata.iamVersion in the configs, currently 8.6). The 20 MB source HTML is
-intentionally NOT committed; only the generated JSON[.gz] is. Regenerate after an IAM
-upgrade:
+Provenance: the source HTML is the Airlock IAM plugin documentation for the target IAM
+version, published at
 
-    python3 tools/generate_catalog.py <plugin-docs.html> src/main/resources/airlock/iam-8.6-plugins.json
+    https://docs.airlock.com/iam/<version>/plugin-docs.html
+
+(fetch with a browser User-Agent; plain curl is rejected). Pages exist only while the
+version is in support -- 8.3's docs are already delisted -- so generate a version's catalog
+WHILE its docs are still published. The ~20 MB source HTML is intentionally NOT committed;
+only the generated JSON[.gz] is. To add or refresh a version:
+
+    python3 tools/generate_catalog.py <plugin-docs.html> <version>
+
+The output lands in src/main/resources/airlock/iam-<version>-plugins.json[.gz], and the
+version is registered in src/main/resources/airlock/catalog-index.json (created with
+`default` = this version on first run; on later runs the existing `default` is preserved --
+bumping it is a separate, deliberate commit that reviews the 8.6-pinned tests).
+
+The cross-check against example-config.yaml only runs when that file's own
+metadata.iamVersion matches the target version (an 8.6 export would flag genuinely-new 8.6
+types as "missing" from an 8.4 catalog).
+
+Oldest supported version: 8.5. IAM 8.4 docs have no "Type name" rows -- 8.4 YAML configs use
+fully-qualified class names as `type:` tokens (short tokens exist only from 8.5), so a
+short-token 8.4 catalog cannot be generated and 8.4 files fall back to the 8.5 catalog.
 """
 from __future__ import annotations
 
@@ -308,6 +326,24 @@ def parse(source: str) -> list[dict]:
     return entries
 
 
+EXAMPLE_IAM_VERSION = re.compile(r"^\s*iamVersion:\s*['\"]?(\d+\.\d+)")
+
+
+def example_iam_version(example_path: Path) -> str | None:
+    """The metadata.iamVersion of the example config (searched in the first 20 lines), or None."""
+    if not example_path.exists():
+        return None
+    with example_path.open(encoding="utf-8") as fh:
+        for _ in range(20):
+            line = fh.readline()
+            if not line:
+                break
+            m = EXAMPLE_IAM_VERSION.match(line)
+            if m:
+                return m.group(1)
+    return None
+
+
 def crosscheck(entries: list[dict], example_path: Path) -> None:
     """Cross-check against example-config.yaml: every used `type:` (except IamConfig) must be in
     the catalog, and property keys used under known parents should be known catalog keys. Reports
@@ -397,12 +433,43 @@ def crosscheck(entries: list[dict], example_path: Path) -> None:
         )
 
 
+VERSION_RE = re.compile(r"^\d+\.\d+$")
+
+
+def update_manifest(manifest_path: Path, version: str) -> None:
+    """Register `version` in catalog-index.json (created on first run with `default` = version;
+    on later runs the existing `default` is preserved -- bump it in a separate, deliberate commit)."""
+    if manifest_path.exists():
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        created = False
+    else:
+        manifest = {"default": version, "versions": []}
+        created = True
+    versions = set(manifest.get("versions", []))
+    versions.add(version)
+    manifest["versions"] = sorted(versions, key=lambda v: tuple(int(p) for p in v.split(".")))
+    manifest_path.write_text(
+        json.dumps(manifest, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
+    )
+    if created:
+        print(f"  created {manifest_path.name}: default={manifest['default']}, versions={manifest['versions']}")
+    else:
+        print(
+            f"  added {version} to {manifest_path.name}; default remains {manifest['default']} -- "
+            "bump 'default' deliberately in a separate commit (review the 8.6-pinned tests)"
+        )
+
+
 def main() -> int:
     if len(sys.argv) != 3:
         print(__doc__)
-        print("usage: generate_catalog.py <input.html> <output.json>", file=sys.stderr)
+        print("usage: generate_catalog.py <plugin-docs.html> <version>", file=sys.stderr)
         return 2
     in_path = Path(sys.argv[1])
+    version = sys.argv[2]
+    if not VERSION_RE.match(version):
+        print(f"ERROR: version {version!r} must look like '8.6'", file=sys.stderr)
+        return 2
     src = in_path.read_text(encoding="utf-8")
     entries = parse(src)
 
@@ -440,7 +507,8 @@ def main() -> int:
     payload = json.dumps(entries, indent=0, ensure_ascii=False) + "\n"
     size = len(payload.encode("utf-8"))
 
-    out_path = Path(sys.argv[2])
+    resources_dir = Path(__file__).resolve().parent.parent / "src" / "main" / "resources" / "airlock"
+    out_path = resources_dir / f"iam-{version}-plugins.json"
     out_path.parent.mkdir(parents=True, exist_ok=True)
     gz_path = out_path.with_suffix(out_path.suffix + ".gz")
     GZIP_THRESHOLD = 1_000_000
@@ -470,10 +538,17 @@ def main() -> int:
 
     print(f"  descriptions: {plugin_desc} plugin-level, {prop_desc} per-property")
 
-    # Cross-check against the example config (fails loudly on missing types).
-    example = in_path  # placeholder; real path resolved below
+    # Cross-check against the example config (fails loudly on missing types) -- but only when the
+    # example itself targets this version: an export from a NEWER IAM legitimately uses types the
+    # older catalog doesn't have.
     example = Path(__file__).resolve().parent.parent / "example-config.yaml"
-    crosscheck(entries, example)
+    ex_version = example_iam_version(example)
+    if ex_version == version:
+        crosscheck(entries, example)
+    else:
+        print(f"  (skip cross-check: {example.name} targets iamVersion={ex_version}, generating {version})")
+
+    update_manifest(resources_dir / "catalog-index.json", version)
 
     # Sample dump.
     print("  samples:")

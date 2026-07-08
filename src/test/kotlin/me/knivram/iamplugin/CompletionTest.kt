@@ -43,7 +43,7 @@ class CompletionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: SimplePasswordPolicy
               id: $POLICY_ID
@@ -70,7 +70,7 @@ class CompletionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: SimplePasswordPolicy
               id: $POLICY_ID
@@ -102,7 +102,7 @@ class CompletionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: SimplePasswordPolicy
               id: $POLICY_ID
@@ -129,7 +129,7 @@ class CompletionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: JdbcConnectionPool
               id: $DB_ID
@@ -154,7 +154,7 @@ class CompletionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: Jdbc<caret>
             """.trimIndent(),
@@ -172,7 +172,7 @@ class CompletionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: ZzzCustomAlpha
               id: a
@@ -193,7 +193,7 @@ class CompletionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: JdbcConnectionPool
               id: db-1
@@ -213,7 +213,7 @@ class CompletionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: JdbcConnectionPool
               id: db-1
@@ -235,7 +235,7 @@ class CompletionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: ZzzCustomUnknownPlugin
               id: x
@@ -256,7 +256,7 @@ class CompletionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: PasswordSettings
               id: pw-1
@@ -283,7 +283,7 @@ class CompletionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - <caret>
             """.trimIndent(),
@@ -301,7 +301,7 @@ class CompletionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: PasswordSettings
               id: pw-1
@@ -325,7 +325,7 @@ class CompletionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: AuthenticationFlow
               id: flow-1
@@ -347,7 +347,7 @@ class CompletionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: SomeType
               id: x-1
@@ -371,7 +371,7 @@ class CompletionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: JdbcConnectionPool
               id: db-1
@@ -393,7 +393,7 @@ class CompletionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: PasswordSettings
               id: pw-1
@@ -417,7 +417,7 @@ class CompletionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: PasswordSettings
               id: pw-1
@@ -439,7 +439,7 @@ class CompletionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: SomePlugin
               id: p-1
@@ -463,7 +463,7 @@ class CompletionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: JdbcConnectionPool
               id: $DB_ID
@@ -488,7 +488,7 @@ class CompletionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: Adminapp
               id: admin-1
@@ -513,7 +513,7 @@ class CompletionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: AuthenticationFlow
               id: flow-1
@@ -536,7 +536,7 @@ class CompletionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: AuthenticationFlow
               id: flow-1
@@ -560,7 +560,7 @@ class CompletionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: Airlock2FAActivationStep
               id: step-1
@@ -582,7 +582,7 @@ class CompletionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: PasswordSettings
               id: pw-1
@@ -605,7 +605,7 @@ class CompletionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: JdbcConnectionPool
               id: db-1
@@ -627,7 +627,7 @@ class CompletionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: ZzzCustomUnknownPlugin
               id: x
@@ -649,7 +649,7 @@ class CompletionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: SomePlugin
               id: p-1
@@ -678,7 +678,7 @@ class CompletionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: SomePlugin
               id: p-1
@@ -702,7 +702,7 @@ class CompletionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: SomePlugin
               id: p-1
@@ -725,7 +725,7 @@ class CompletionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: SomePlugin
               id: p-1

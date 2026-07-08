@@ -29,7 +29,8 @@ import org.jetbrains.yaml.psi.YAMLSequenceItem
  *  - value of `ref:`/`parentRef:` → plugins declared in this file (shown by displayName, inserts the id),
  *    slot-scoped to the enclosing slot's assignable types when known, else all file plugins;
  *  - value of `type:` → Airlock plugin type names: slot-scoped to the enclosing slot's assignable
- *    types when known, else the bundled 8.6 catalog ∪ types used in this file;
+ *    types when known, else the bundled catalog for the file's resolved IAM version ∪ types used in
+ *    this file;
  *  - value of a plugin-valued property → scaffolds for the `plugin`/`pluginList`/`pluginMap` wrapper
  *    forms, inserting the wrapper skeleton ready to author (Improvement #3);
  *  - key inside a plugin's `properties:` → that plugin type's declared property names (catalog);
@@ -78,7 +79,7 @@ class AirlockCompletionContributor : CompletionContributor() {
                 key in IamConfigPsi.REF_KEYS -> addRefCompletions(file, keyValue, result)
                 key == IamConfigPsi.TYPE_KEY -> addTypeCompletions(file, keyValue, result)
                 key == IamConfigPsi.ENV_KEY -> addEnvCompletions(file, result)
-                else -> addValueFormScaffolds(keyValue, result)
+                else -> addValueFormScaffolds(file, keyValue, result)
             }
         }
 
@@ -105,12 +106,12 @@ class AirlockCompletionContributor : CompletionContributor() {
          *
          * Only fires for catalog-known parent types so unknown/custom plugins never get spurious offers.
          */
-        private fun addValueFormScaffolds(keyValue: YAMLKeyValue, result: CompletionResultSet) {
+        private fun addValueFormScaffolds(file: YAMLFile, keyValue: YAMLKeyValue, result: CompletionResultSet) {
             if (!IamConfigPsi.isDirectChildOfProperties(keyValue)) return
             val propertiesKv = keyValue.parentMapping?.parent as? YAMLKeyValue ?: return
             val parentType = IamConfigPsi.enclosingPluginType(propertiesKv) ?: return
 
-            val catalog = AirlockPluginCatalog.getInstance()
+            val catalog = AirlockPluginCatalog.forFile(file)
             if (!catalog.isKnownType(parentType)) return
             val prop = catalog.property(parentType, keyValue.keyText) ?: return
             if (!prop.kind.isPluginValued) return
@@ -178,7 +179,7 @@ class AirlockCompletionContributor : CompletionContributor() {
          * empty assignable list) fall back to every plugin in the file.
          */
         private fun addRefCompletions(file: YAMLFile, refKv: YAMLKeyValue, result: CompletionResultSet) {
-            val catalog = AirlockPluginCatalog.getInstance()
+            val catalog = AirlockPluginCatalog.forFile(file)
             val slot = refKv.parentMapping?.let { IamConfigPsi.slotOf(it) }
             val assignable = slot
                 ?.let { catalog.property(it.parentType, it.propertyName) }
@@ -207,7 +208,7 @@ class AirlockCompletionContributor : CompletionContributor() {
         }
 
         private fun addTypeCompletions(file: YAMLFile, typeKv: YAMLKeyValue, result: CompletionResultSet) {
-            val catalog = AirlockPluginCatalog.getInstance()
+            val catalog = AirlockPluginCatalog.forFile(file)
             val childMapping = typeKv.parentMapping
             val slot = childMapping?.let { IamConfigPsi.slotOf(it) }
             val assignable = slot
@@ -263,7 +264,7 @@ class AirlockCompletionContributor : CompletionContributor() {
             val propertiesKv = propertiesKeyForKeyPosition(parameters) ?: return
             val parentType = IamConfigPsi.enclosingPluginType(propertiesKv) ?: return
 
-            val catalog = AirlockPluginCatalog.getInstance()
+            val catalog = AirlockPluginCatalog.forFile(file)
             if (!catalog.isKnownType(parentType)) return
 
             val existing = (propertiesKv.value as? YAMLMapping)
@@ -381,7 +382,8 @@ class AirlockCompletionContributor : CompletionContributor() {
         private fun isPluginValuedSlot(slotKv: YAMLKeyValue): Boolean {
             val propertiesKv = slotKv.parentMapping?.parent as? YAMLKeyValue ?: return false
             val parentType = IamConfigPsi.enclosingPluginType(propertiesKv) ?: return false
-            val catalog = AirlockPluginCatalog.getInstance()
+            val file = slotKv.containingFile as? YAMLFile ?: return false
+            val catalog = AirlockPluginCatalog.forFile(file)
             if (!catalog.isKnownType(parentType)) return false
             return catalog.property(parentType, slotKv.keyText)?.kind?.isPluginValued == true
         }

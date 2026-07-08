@@ -4,6 +4,12 @@
 
 ## [Unreleased]
 
+### Added
+
+- **Multiple IAM versions** — completion, validation and quick documentation now match each config's
+  IAM version (taken from `metadata.iamVersion`, switchable per file via the editor header). Supports
+  IAM 8.5 and 8.6.
+
 ## [0.0.3] - 2026-07-03
 
 ### Added

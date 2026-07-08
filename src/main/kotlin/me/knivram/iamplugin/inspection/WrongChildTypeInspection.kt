@@ -26,7 +26,7 @@ class WrongChildTypeInspection : LocalInspectionTool() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
         val file = holder.file as? YAMLFile ?: return PsiElementVisitor.EMPTY_VISITOR
         if (!IamConfigPsi.isIamConfigFile(file)) return PsiElementVisitor.EMPTY_VISITOR
-        val catalog = AirlockPluginCatalog.getInstance()
+        val catalog = AirlockPluginCatalog.forFile(file)
         val model = IamConfigFileModel.of(file)
 
         return object : PsiElementVisitor() {

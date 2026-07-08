@@ -19,7 +19,7 @@ class PlaintextSecretInspectionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: AES256DecryptionTicketDecoder
               id: dec-1
@@ -37,7 +37,7 @@ class PlaintextSecretInspectionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: AES256DecryptionTicketDecoder
               id: dec-1
@@ -56,7 +56,7 @@ class PlaintextSecretInspectionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: AES256DecryptionTicketDecoder
               id: dec-1
@@ -74,7 +74,7 @@ class PlaintextSecretInspectionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: AES256DecryptionTicketDecoder
               id: dec-1
@@ -92,7 +92,7 @@ class PlaintextSecretInspectionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: AES256DecryptionTicketDecoder
               id: dec-1
@@ -112,7 +112,7 @@ class PlaintextSecretInspectionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: AES256DecryptionTicketDecoder
               id: dec-1
@@ -135,7 +135,7 @@ class PlaintextSecretInspectionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: AES256DecryptionTicketDecoder
               id: dec-1
@@ -154,7 +154,7 @@ class PlaintextSecretInspectionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: ZzzCustomUnknownPlugin
               id: x
@@ -174,7 +174,7 @@ class PlaintextSecretInspectionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: StaticSensitiveHttpParameter
               id: p-1

@@ -5,9 +5,13 @@ import com.google.gson.reflect.TypeToken
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
+import me.knivram.iamplugin.psi.IamConfigPsi
+import me.knivram.iamplugin.settings.IamVersionOverrides
+import org.jetbrains.yaml.psi.YAMLFile
 import java.io.InputStream
 import java.io.InputStreamReader
 import java.nio.charset.StandardCharsets
+import java.util.concurrent.ConcurrentHashMap
 import java.util.zip.GZIPInputStream
 
 /** The documented value-kind of a plugin property (the KIND `property-tag` in the IAM docs). */
@@ -63,14 +67,45 @@ data class CatalogEntry(
     val propertiesByName: Map<String, CatalogProperty> by lazy { properties.associateBy { it.name } }
 }
 
+/** How a file's IAM version was determined. */
+enum class VersionProvenance {
+    /** Explicit per-file selection made in the editor banner (stored IDE-side, per developer). */
+    OVERRIDE,
+
+    /** The file's own `metadata.iamVersion` marker. */
+    MARKER,
+
+    /** Neither override nor marker present: the manifest's default version. */
+    DEFAULT,
+}
+
 /**
- * The bundled, version-pinned Airlock IAM plugin-type catalog (IAM 8.6).
- *
- * Generated offline from the official IAM plugin documentation by `tools/generate_catalog.py`
- * into `airlock/iam-8.6-plugins.json` (gzipped to `…json.gz` when large). Loaded once, lazily.
+ * The outcome of resolving a file's IAM version to a bundled catalog: which version was asked
+ * for (raw and parsed), where the request came from, and the catalog that answers it. Kept
+ * provenance-rich so UI (the editor banner) can explain fallbacks without re-deriving them.
  */
-@Service(Service.Level.APP)
-class AirlockPluginCatalog {
+data class CatalogResolution(
+    /** The raw override/marker text, or null when the file carries neither. */
+    val requestedRaw: String?,
+    /** Parsed form of [requestedRaw]; null when absent or unparseable. */
+    val requested: IamVersion?,
+    val provenance: VersionProvenance,
+    val catalog: VersionedCatalog,
+) {
+    /** True when the resolved catalog is exactly the requested version. */
+    val exactMatch: Boolean
+        get() = requested != null && requested == IamVersion.parse(catalog.version)
+}
+
+/**
+ * The bundled plugin-type catalog for ONE IAM version, generated offline from the official IAM
+ * plugin documentation by `tools/generate_catalog.py` into `airlock/iam-<version>-plugins.json`
+ * (gzipped to `…json.gz` when large). Loaded once, lazily, on first query.
+ *
+ * Obtain instances via [AirlockPluginCatalog] — this data layer is deliberately psi-free; the
+ * psi/settings-aware version resolution lives on [AirlockPluginCatalog]'s companion.
+ */
+class VersionedCatalog internal constructor(val version: String) {
 
     val entries: List<CatalogEntry> by lazy { load() }
 
@@ -121,9 +156,10 @@ class AirlockPluginCatalog {
         propertiesOf(type).filter { it.kind == PropertyKind.PLUGIN_LINK }.flatMap { it.assignable }
 
     private fun load(): List<CatalogEntry> {
-        val raw = openCatalogStream(javaClass.classLoader)
+        val resource = "airlock/iam-$version-plugins.json"
+        val raw = openCatalogStream(javaClass.classLoader, resource)
         if (raw == null) {
-            thisLogger().warn("Airlock plugin catalog resource not found: $RESOURCE(.gz)")
+            thisLogger().warn("Airlock plugin catalog resource not found: $resource(.gz)")
             return emptyList()
         }
         return try {
@@ -136,7 +172,7 @@ class AirlockPluginCatalog {
                 rawEntries.mapNotNull { it.toEntry() }
             }
         } catch (e: Exception) {
-            thisLogger().warn("Failed to read Airlock plugin catalog", e)
+            thisLogger().warn("Failed to read Airlock plugin catalog for IAM $version", e)
             emptyList()
         }
     }
@@ -144,9 +180,9 @@ class AirlockPluginCatalog {
     private data class RawStream(val input: InputStream, val gzipped: Boolean)
 
     /** Prefer the gzipped resource; fall back to the plain JSON for either packaging. */
-    private fun openCatalogStream(cl: ClassLoader): RawStream? =
-        cl.getResourceAsStream("$RESOURCE.gz")?.let { RawStream(it, gzipped = true) }
-            ?: cl.getResourceAsStream(RESOURCE)?.let { RawStream(it, gzipped = false) }
+    private fun openCatalogStream(cl: ClassLoader, resource: String): RawStream? =
+        cl.getResourceAsStream("$resource.gz")?.let { RawStream(it, gzipped = true) }
+            ?: cl.getResourceAsStream(resource)?.let { RawStream(it, gzipped = false) }
 
     private data class RawEntry(
         val type: String?,
@@ -183,14 +219,116 @@ class AirlockPluginCatalog {
     }
 
     companion object {
-        private const val RESOURCE = "airlock/iam-8.6-plugins.json"
-
         /**
          * Root of the global-config settings tree. Kept as a literal here (rather than reusing the psi
-         * module's `IamConfigPsi.GLOBAL_CONFIG_TYPE`) so the catalog stays free of a psi dependency.
+         * module's `IamConfigPsi.GLOBAL_CONFIG_TYPE`) so the catalog data layer stays free of a psi
+         * dependency.
          */
         private const val GLOBAL_CONFIG_TYPE = "GlobalConfiguration"
+    }
+}
+
+/**
+ * Registry of the bundled, version-keyed Airlock IAM plugin-type catalogs.
+ *
+ * The bundled set is enumerated by the `airlock/catalog-index.json` manifest (maintained by
+ * `tools/generate_catalog.py`), which also pins the [defaultVersion] used when a file requests
+ * nothing. Catalogs are handed out as [VersionedCatalog] objects, cached per version, each
+ * parsing its ~4 MB JSON lazily — only versions actually resolved pay that cost.
+ *
+ * Per-file resolution (the [resolve]/[forFile] facade) is: banner override > the file's
+ * `metadata.iamVersion` marker > [defaultVersion], with nearest-match fallback for versions
+ * that are not bundled (largest bundled ≤ requested, else the oldest bundled — an older
+ * catalog under-reports rather than demanding properties the user's IAM lacks).
+ */
+@Service(Service.Level.APP)
+class AirlockPluginCatalog {
+
+    private data class Manifest(val default: String?, val versions: List<String>?)
+
+    private val manifest: Manifest by lazy { loadManifest() }
+
+    /** The bundled versions, ascending; empty when the manifest is missing/corrupt (degraded mode). */
+    val bundledVersions: List<String> by lazy {
+        manifest.versions.orEmpty()
+            .filter { IamVersion.parse(it) != null }
+            .sortedBy { IamVersion.parse(it) }
+    }
+
+    /** The version used when a file requests nothing; the newest bundled if the pin is invalid. */
+    val defaultVersion: String by lazy {
+        val pinned = manifest.default
+        when {
+            pinned != null && pinned in bundledVersions -> pinned
+            bundledVersions.isNotEmpty() -> bundledVersions.last().also {
+                thisLogger().warn("catalog-index.json default '$pinned' is not bundled; using newest ($it)")
+            }
+            else -> pinned.orEmpty()
+        }
+    }
+
+    private val cache = ConcurrentHashMap<String, VersionedCatalog>()
+
+    /**
+     * The catalog for [requested] (a raw version string, e.g. a `metadata.iamVersion` value):
+     * exact bundled match, else largest bundled ≤ requested, else the oldest bundled;
+     * null/unparseable requests get the [defaultVersion] catalog.
+     */
+    fun catalog(requested: String?): VersionedCatalog {
+        val req = IamVersion.parse(requested) ?: return catalogFor(defaultVersion)
+        if (bundledVersions.isEmpty()) return catalogFor(defaultVersion)
+        val exact = bundledVersions.firstOrNull { IamVersion.parse(it) == req }
+        if (exact != null) return catalogFor(exact)
+        val below = bundledVersions.lastOrNull { IamVersion.parse(it)!! <= req }
+        return catalogFor(below ?: bundledVersions.first())
+    }
+
+    private fun catalogFor(version: String): VersionedCatalog =
+        cache.computeIfAbsent(version, ::VersionedCatalog)
+
+    private fun loadManifest(): Manifest {
+        val stream = javaClass.classLoader.getResourceAsStream(MANIFEST_RESOURCE)
+        if (stream == null) {
+            thisLogger().warn("Airlock catalog manifest resource not found: $MANIFEST_RESOURCE")
+            return Manifest(null, null)
+        }
+        return try {
+            InputStreamReader(stream, StandardCharsets.UTF_8).use { reader ->
+                Gson().fromJson(reader, Manifest::class.java) ?: Manifest(null, null)
+            }
+        } catch (e: Exception) {
+            thisLogger().warn("Failed to read Airlock catalog manifest", e)
+            Manifest(null, null)
+        }
+    }
+
+    companion object {
+        private const val MANIFEST_RESOURCE = "airlock/catalog-index.json"
 
         fun getInstance(): AirlockPluginCatalog = service()
+
+        /**
+         * Resolve [file]'s IAM version to a bundled catalog with full provenance:
+         * banner override > `metadata.iamVersion` marker > manifest default.
+         */
+        fun resolve(file: YAMLFile): CatalogResolution {
+            val registry = getInstance()
+            val override = IamVersionOverrides.getInstance(file.project).versionFor(file)
+            if (override != null) {
+                return CatalogResolution(
+                    override, IamVersion.parse(override), VersionProvenance.OVERRIDE, registry.catalog(override),
+                )
+            }
+            val marker = IamConfigPsi.declaredIamVersion(file)
+            if (marker != null) {
+                return CatalogResolution(
+                    marker, IamVersion.parse(marker), VersionProvenance.MARKER, registry.catalog(marker),
+                )
+            }
+            return CatalogResolution(null, null, VersionProvenance.DEFAULT, registry.catalog(null))
+        }
+
+        /** The catalog answering for [file] — the one-line seam every feature call site uses. */
+        fun forFile(file: YAMLFile): VersionedCatalog = resolve(file).catalog
     }
 }

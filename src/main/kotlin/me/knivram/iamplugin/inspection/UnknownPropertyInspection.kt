@@ -26,7 +26,7 @@ class UnknownPropertyInspection : LocalInspectionTool() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
         val file = holder.file as? YAMLFile ?: return PsiElementVisitor.EMPTY_VISITOR
         if (!IamConfigPsi.isIamConfigFile(file)) return PsiElementVisitor.EMPTY_VISITOR
-        val catalog = AirlockPluginCatalog.getInstance()
+        val catalog = AirlockPluginCatalog.forFile(file)
 
         return object : PsiElementVisitor() {
             override fun visitElement(element: PsiElement) {

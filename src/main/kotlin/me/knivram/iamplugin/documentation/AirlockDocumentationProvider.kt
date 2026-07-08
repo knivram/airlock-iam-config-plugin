@@ -66,7 +66,7 @@ class AirlockDocumentationProvider : AbstractDocumentationProvider() {
             if (onKey) {
                 val propertiesKv = kv.parentMapping?.parent as? YAMLKeyValue ?: return null
                 val parentType = IamConfigPsi.enclosingPluginType(propertiesKv) ?: return null
-                if (AirlockPluginCatalog.getInstance().property(parentType, kv.keyText) == null) return null
+                if (AirlockPluginCatalog.forFile(yamlFile).property(parentType, kv.keyText) == null) return null
                 return kv
             }
         }
@@ -92,7 +92,7 @@ class AirlockDocumentationProvider : AbstractDocumentationProvider() {
         val file = kv.containingFile as? YAMLFile ?: return null
         if (!IamConfigPsi.isIamConfigFile(file)) return null
 
-        val catalog = AirlockPluginCatalog.getInstance()
+        val catalog = AirlockPluginCatalog.forFile(file)
 
         // Plugin definition `id:` value (also the resolve target of ref:/parentRef:).
         if (IamConfigPsi.isPluginDefinitionId(kv)) {

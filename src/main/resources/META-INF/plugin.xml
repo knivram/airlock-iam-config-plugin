@@ -4,7 +4,7 @@
     <name>Config Navigator</name>
     <vendor>knivram</vendor>
     <description><![CDATA[
-        <p>Editor support for <b>Airlock IAM</b> configuration files (<code>type: IamConfig</code> or <code>type: IamSnippet</code>, <code>schemaVersion: iam.airlock.com/&hellip;</code>), powered by a bundled catalog of the IAM 8.6 plugin types &mdash; their properties, allowed child plugins and documentation.</p>
+        <p>Editor support for <b>Airlock IAM</b> configuration files (<code>type: IamConfig</code> or <code>type: IamSnippet</code>, <code>schemaVersion: iam.airlock.com/&hellip;</code>), powered by bundled catalogs of the Airlock IAM plugin types &mdash; their properties, allowed child plugins and documentation &mdash; for several IAM versions (currently 8.5 and 8.6). Each file is validated against the version its <code>metadata.iamVersion</code> declares; files without one use the default (8.6), and an editor header explains any fallback, with a dropdown naming the effective version and switching it per file.</p>
         <ul>
             <li><b>Navigation</b> &mdash; jump from a <code>ref:</code>/<code>parentRef:</code> to the plugin <code>id:</code> it points at; from an <code>id:</code>, Find Usages (or Ctrl/Cmd+B) lists everything that references it; gutter icons link a definition and its usages both ways.</li>
             <li><b>Code completion</b> &mdash; <code>ref:</code> values (existing plugins, shown by display name, matched case-insensitively); <code>type:</code> values (constrained to the plugins valid for the surrounding slot, else the full catalog); plugin <b>property names</b>; plugin-definition keys (<code>type</code>/<code>id</code>/<code>displayName</code>/<code>comment</code>/<code>parentRef</code>/<code>properties</code>); <code>pluginList</code>/<code>pluginMap</code> scaffolds; and <code>env:</code>/<code>var:</code> for environment-specific values.</li>
@@ -50,6 +50,11 @@
         <!-- Quick Documentation / hover docs for type:, property keys, ids and refs. -->
         <lang.documentationProvider language="yaml"
                                     implementationClass="me.knivram.iamplugin.documentation.AirlockDocumentationProvider"/>
+
+        <!-- Banner naming the IAM version whose catalog validates the file whenever that is not simply
+             the version the file declares (no metadata.iamVersion, unsupported version, or a manual
+             per-file selection); carries the version picker. -->
+        <editorNotificationProvider implementation="me.knivram.iamplugin.editor.IamVersionNotificationProvider"/>
 
         <!-- Labels ref:/parentRef: usages in the Find Usages tool window. -->
         <usageTypeProvider implementation="me.knivram.iamplugin.usage.IamConfigUsageTypeProvider"/>

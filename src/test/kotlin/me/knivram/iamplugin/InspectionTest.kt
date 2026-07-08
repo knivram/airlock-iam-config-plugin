@@ -20,7 +20,7 @@ class InspectionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: JdbcConnectionPool
               id: good-id-0000
@@ -47,7 +47,7 @@ class InspectionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: JdbcConnectionPool
               id: in-other-file
@@ -59,7 +59,7 @@ class InspectionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: Consumer
               id: consumer-1
@@ -93,7 +93,7 @@ class InspectionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamSnippet
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: JdbcConnectionPool
               id: good-id-0000
@@ -119,7 +119,7 @@ class InspectionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: PluginA
               id: dup-1234
@@ -143,7 +143,7 @@ class InspectionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: PluginA
               id: shared-uuid
@@ -154,7 +154,7 @@ class InspectionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: PluginA
               id: shared-uuid
@@ -173,7 +173,7 @@ class InspectionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: JdbcConnectionPool
               id: db-1
@@ -198,7 +198,7 @@ class InspectionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: JdbcConnectionPool
               id: db-1
@@ -219,7 +219,7 @@ class InspectionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: ZzzCustomUnknownPlugin
               id: x
@@ -239,7 +239,7 @@ class InspectionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: JdbcConnectionPool
               id: db-1
@@ -275,7 +275,7 @@ class InspectionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: JdbcConnectionPool
               id: db-1
@@ -302,7 +302,7 @@ class InspectionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: JdbcConnectionPool
               id: db-1
@@ -325,7 +325,7 @@ class InspectionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: PasswordSettings
               id: pw-1
@@ -344,7 +344,7 @@ class InspectionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: PasswordSettings
               id: pw-1
@@ -364,7 +364,7 @@ class InspectionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: PasswordSettings
               id: pw-1
@@ -385,7 +385,7 @@ class InspectionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: AccessCookieIdentityPropagator
               id: prop-1
@@ -407,7 +407,7 @@ class InspectionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: AccountLinkDeletionInitiationStep
               id: step-1
@@ -430,7 +430,7 @@ class InspectionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: JdbcConnectionPool
               id: db-1
@@ -451,7 +451,7 @@ class InspectionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: SimplePasswordPolicy
               id: policy-1
@@ -475,7 +475,7 @@ class InspectionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: JdbcConnectionPool
               id: db-1
@@ -499,7 +499,7 @@ class InspectionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: JdbcConnectionPool
               id: db-1
@@ -524,7 +524,7 @@ class InspectionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: Adminapp
               id: app-1
@@ -569,7 +569,7 @@ class InspectionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: PasswordSettings
               id: pw-1
@@ -598,7 +598,7 @@ class InspectionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: PasswordSettings
               id: pw-1
@@ -614,7 +614,7 @@ class InspectionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: PasswordSettings
               id: pw-1
@@ -633,7 +633,7 @@ class InspectionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: PasswordSettings
               id: pw-1
@@ -646,7 +646,7 @@ class InspectionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: PasswordSettings
               id: pw-1
@@ -666,7 +666,7 @@ class InspectionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: PasswordSettings
               id: pw-1
@@ -691,7 +691,7 @@ class InspectionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: OAuth2SsoFlowClientSettings
               id: oauth-1
@@ -708,7 +708,7 @@ class InspectionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: OAuth2SsoFlowClientSettings
               id: oauth-1
@@ -734,7 +734,7 @@ class InspectionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: OAuth2SsoFlowClientSettings
               id: oauth-1
@@ -747,7 +747,7 @@ class InspectionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: OAuth2SsoFlowClientSettings
               id: oauth-1
@@ -772,7 +772,7 @@ class InspectionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: OAuth2SsoFlowClientSettings
               id: oauth-1
@@ -803,7 +803,7 @@ class InspectionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: PasswordSettings
               id: pw-1
@@ -832,7 +832,7 @@ class InspectionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: PasswordSettings
               id: pw-1
@@ -854,7 +854,7 @@ class InspectionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: ZzzCustomUnknownPlugin
               id: x
@@ -875,7 +875,7 @@ class InspectionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: PasswordSettings
               id: pw-1
@@ -898,7 +898,7 @@ class InspectionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: ZzzCustomOuterPlugin
               id: outer-1
@@ -923,7 +923,7 @@ class InspectionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: GlobalConfiguration
               id: global-1
@@ -956,7 +956,7 @@ class InspectionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: Airlock2FAConsistencyUserChangeListener
               id: listener-1
@@ -976,7 +976,7 @@ class InspectionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: GlobalConfiguration
               id: global-1
@@ -1010,7 +1010,7 @@ class InspectionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: GlobalConfiguration
               id: global-1
@@ -1041,7 +1041,7 @@ class InspectionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: GlobalConfiguration
               id: global-1
@@ -1071,7 +1071,7 @@ class InspectionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: AcceptedSsoTicketsCleanupTask
               id: task-1
@@ -1089,7 +1089,7 @@ class InspectionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: GenericHttpSmsGateway
               id: gw-1
@@ -1110,7 +1110,7 @@ class InspectionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: GenericHttpSmsGateway
               id: gw-1
@@ -1131,7 +1131,7 @@ class InspectionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: GenericHttpSmsGateway
               id: gw-1
@@ -1153,7 +1153,7 @@ class InspectionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: GenericHttpSmsGateway
               id: gw-1
@@ -1176,7 +1176,7 @@ class InspectionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: GenericHttpSmsGateway
               id: gw-1
@@ -1203,7 +1203,7 @@ class InspectionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: SomePlugin
               id: p-1
@@ -1226,7 +1226,7 @@ class InspectionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: SomePlugin
               id: p-1
@@ -1247,7 +1247,7 @@ class InspectionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: GenericHttpSmsGateway
               id: gw-1
@@ -1270,7 +1270,7 @@ class InspectionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: SomePlugin
               id: p-1
@@ -1293,7 +1293,7 @@ class InspectionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: SomePlugin
               id: p-1
@@ -1319,7 +1319,7 @@ class InspectionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: SomePlugin
               id: p-1
@@ -1341,7 +1341,7 @@ class InspectionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: SomePlugin
               id: p-1
@@ -1364,7 +1364,7 @@ class InspectionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: SomePlugin
               id: p-1
@@ -1387,7 +1387,7 @@ class InspectionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: SomePlugin
               id: p-1
@@ -1408,7 +1408,7 @@ class InspectionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: SomePlugin
               id: p-1
@@ -1429,7 +1429,7 @@ class InspectionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: GenericHttpSmsGateway
               id: gw-1
@@ -1464,7 +1464,7 @@ class InspectionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: SomePlugin
               id: p-1
@@ -1488,7 +1488,7 @@ class InspectionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: SomePlugin
               id: p-1
@@ -1510,7 +1510,7 @@ class InspectionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: SomePlugin
               id: p-1
@@ -1531,7 +1531,7 @@ class InspectionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: SomePlugin
               id: p-1
@@ -1553,7 +1553,7 @@ class InspectionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: ZzzCustomPlugin
               id: p-1
@@ -1574,7 +1574,7 @@ class InspectionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: SomePlugin
               id: p-1
@@ -1593,7 +1593,7 @@ class InspectionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: SomePlugin
               id: p-1
@@ -1615,7 +1615,7 @@ class InspectionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: SomePlugin
               id: p-1
@@ -1644,7 +1644,7 @@ class InspectionTest : BasePlatformTestCase() {
             """
             schemaVersion: iam.airlock.com/v1.1
             type: IamConfig
-            metadata: {}
+            metadata: {iamVersion: '8.6'}
             spec:
             - type: JdbcConnectionPool
               id: db-1

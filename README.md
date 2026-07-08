@@ -4,8 +4,12 @@
 
 <!-- Plugin description -->
 Editor support for **Airlock IAM** configuration files — the large YAML documents with
-`type: IamConfig` (or `type: IamSnippet`) and `schemaVersion: iam.airlock.com/…`. Backed by a bundled
-catalog of the IAM 8.6 plugin types: their properties, the child plugins allowed in each slot, and documentation.
+`type: IamConfig` (or `type: IamSnippet`) and `schemaVersion: iam.airlock.com/…`. Backed by bundled
+catalogs of the Airlock IAM plugin types — their properties, the child plugins allowed in each slot,
+and documentation — for several IAM versions (currently 8.5 and 8.6). Each file is validated against
+the IAM version its `metadata.iamVersion` declares; files without one use the default (8.6), and an
+editor header explains any fallback, with an "Auto-detect" dropdown (showing where auto-detect
+resolved to) that switches the version per file.
 
 These configs are trees of *plugins*. A plugin is a YAML mapping with a `type:` and an `id:`;
 instead of inlining a plugin, another place can reference it by `ref:` (or inherit via `parentRef:`)
@@ -19,7 +23,8 @@ painful to author and read by hand. This plugin makes them first-class:
   - `ref:` / `parentRef:` values — pick an existing plugin (shown by its `displayName` and type,
     matched **case-insensitively**); the id is inserted for you.
   - `type:` values — constrained to the plugins assignable to the surrounding slot, falling back to
-    the full bundled catalog (~1600 IAM 8.6 types) plus types already used in the file.
+    the full bundled catalog (~1600 types, for the file's resolved IAM version) plus types already
+    used in the file.
   - plugin **property names**, plugin-definition keys
     (`type`/`id`/`displayName`/`comment`/`parentRef`/`properties`),
     `pluginList`/`pluginMap`/`plugin` scaffolds, and `env:` / `var:` for environment-specific values.
@@ -56,18 +61,21 @@ IntelliJ IDEA 2025.2+ (the bundled YAML plugin must be enabled).
 - Slot-aware completion, child-type validation, property/type docs and the missing-mandatory
   inspection are driven by the bundled plugin catalog (type → properties, kinds, mandatory flags,
   assignable child types, and descriptions).
+- **IAM version resolution** — per file: a manual header selection (stored per developer) > the
+  file's `metadata.iamVersion` > the default version. A version with no bundled catalog falls back to
+  the nearest lower one. The editor header appears whenever the active version isn't simply the
+  declared one, and its "Auto-detect" dropdown switches it per file.
 
-## Updating the bundled type catalog
+## The bundled type catalogs
 
-The catalog is `src/main/resources/airlock/iam-8.6-plugins.json.gz` (gzipped; per type: properties,
-kinds, mandatory flags, assignable child types and descriptions), generated offline from the official
-Airlock IAM plugin documentation HTML — pinned to the IAM version in `metadata.iamVersion` (currently
-8.6). The 20 MB source HTML is intentionally not committed. To regenerate for a new IAM version (the
-generator gzips the output to `.gz` when it exceeds ~1 MB):
+One catalog per IAM version lives in `src/main/resources/airlock/` as `iam-<version>-plugins.json.gz`,
+enumerated by `airlock/catalog-index.json`, which also pins the `default` version. For the full list
+of supported IAM versions, see `catalog-index.json`.
 
-```bash
-python3 tools/generate_catalog.py <iam-plugin-docs.html> src/main/resources/airlock/iam-8.6-plugins.json
-```
+To add a version, download `https://docs.airlock.com/iam/<version>/plugin-docs.html` (needs a browser
+User-Agent; not committed) and run `python3 tools/generate_catalog.py <plugin-docs.html> <version>` —
+it writes the `.json.gz` and registers the version in `catalog-index.json`, leaving `default`
+unchanged. See `tools/generate_catalog.py` for details.
 
 ## Building
 

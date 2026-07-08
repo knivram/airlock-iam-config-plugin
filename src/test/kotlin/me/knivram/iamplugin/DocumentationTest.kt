@@ -80,7 +80,7 @@ class DocumentationTest : BasePlatformTestCase() {
         // "HikariCP" appears only in the catalog description, not the title or any property name.
         assertTrue("doc embeds the type description", doc.contains("HikariCP"))
         // No property cap: every property is listed, including ones past the old 12-row limit.
-        val props = AirlockPluginCatalog.getInstance().entry("JdbcConnectionPool")!!.properties
+        val props = AirlockPluginCatalog.getInstance().catalog("8.6").entry("JdbcConnectionPool")!!.properties
         assertTrue("JdbcConnectionPool has >12 properties (the old cap would have truncated)", props.size > 12)
         assertTrue("the last property is shown (no cap)", doc.contains(props.last().name))
     }
@@ -389,7 +389,7 @@ class DocumentationTest : BasePlatformTestCase() {
     fun testDescriptionTagsAreBalanced() {
         // AspSmsGateway's plugin-level description ended with an orphan <p> in the source HTML;
         // the generator's balancing pass must have closed it (verified against the bundled data).
-        val entry = AirlockPluginCatalog.getInstance().entry("AspSmsGateway")
+        val entry = AirlockPluginCatalog.getInstance().catalog("8.6").entry("AspSmsGateway")
         assertNotNull("AspSmsGateway is a known type", entry)
         val desc = entry!!.description
         assertNotNull("AspSmsGateway has a bundled description", desc)
